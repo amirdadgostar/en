@@ -29,7 +29,14 @@
     <div class="bg-white p-8 rounded-xl shadow-lg w-96">
         <h2 class="text-2xl font-bold text-center mb-6 text-blue-600" id="authTitle">ورود به حساب</h2>
         <input type="email" id="email" placeholder="ایمیل شما" class="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input type="password" id="password" placeholder="رمز عبور" class="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+        
+        <!-- فیلد رمز عبور همراه با دکمه چشم -->
+        <div class="relative w-full mb-4">
+            <input type="password" id="password" placeholder="رمز عبور" class="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <span onclick="togglePasswordVisibility()" class="absolute inset-y-0 left-3 flex items-center cursor-pointer text-gray-400 hover:text-blue-600">
+                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+            </span>
+        </div>
         
         <button onclick="handleAuth()" id="authBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition font-bold">ورود</button>
         
@@ -122,7 +129,22 @@
 <script>
     let isLoginMode = true;
     let currentUser = localStorage.getItem('userEmail');
-    let currentOrderId = null; // برای مرحله ثبت سفارش
+    let currentOrderId = null; 
+
+    // منطق نمایش/مخفی کردن رمز عبور
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('password');
+        const icon = document.getElementById('togglePasswordIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
 
     // --- منطق اجرای اولیه و برگشت از پرداخت ---
     window.onload = function() {
@@ -131,7 +153,7 @@
             document.getElementById('dashboardSection').classList.remove('hidden');
             document.getElementById('userEmailDisplay').innerText = currentUser;
             loadOrders();
-            checkPaymentReturn(); // بررسی اینکه آیا از درگاه برگشته؟
+            checkPaymentReturn(); 
         }
     }
 
@@ -149,9 +171,14 @@
 
             fetch(GAS_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "update_payment", orderId: pendingOrder, status: status })
-            }).then(res => res.json()).then(data => {
-                window.history.replaceState({}, document.title, window.location.pathname); // پاک کردن لینک
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "update_payment", orderId: pendingOrder, status: status }),
+                redirect: "follow"
+            })
+            .then(res => { if (!res.ok) throw new Error("Network error"); return res.text(); })
+            .then(text => {
+                let data = JSON.parse(text);
+                window.history.replaceState({}, document.title, window.location.pathname); 
                 localStorage.removeItem('pendingPaymentOrderId');
                 
                 if (status === 'success') {
@@ -160,6 +187,10 @@
                     Swal.fire('خطا', 'پرداخت ناموفق بود.', 'error');
                 }
                 loadOrders();
+            })
+            .catch(error => {
+                Swal.close();
+                console.error("Error:", error);
             });
         }
     }
@@ -173,24 +204,46 @@
     }
 
     function handleAuth() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        if (!email || !password) return Swal.fire('خطا', 'لطفا فیلدها را پر کنید', 'warning');
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        
+        if (!email || !password) {
+            return Swal.fire('خطا', 'لطفا ایمیل و رمز عبور را وارد کنید.', 'warning');
+        }
 
-        Swal.fire({ title: 'لطفا صبر کنید...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+        Swal.fire({ 
+            title: 'در حال برقراری ارتباط با سرور...', 
+            allowOutsideClick: false, 
+            didOpen: () => { Swal.showLoading() }
+        });
 
         const action = isLoginMode ? "login" : "register";
+        
         fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify({ action: action, email: email, password: password })
-        }).then(res => res.json()).then(data => {
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: action, email: email, password: password }),
+            redirect: "follow" 
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Network response was not ok");
+            return response.text(); 
+        })
+        .then(text => {
+            let data = JSON.parse(text);
+
             if (data.status === "success") {
                 Swal.fire('موفق', isLoginMode ? 'با موفقیت وارد شدید' : 'حساب ساخته شد', 'success');
                 localStorage.setItem('userEmail', email);
-                setTimeout(() => window.location.reload(), 1000);
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                Swal.fire('خطا', data.message, 'error');
+                Swal.fire('خطا', data.message || "خطای نامشخص", 'error');
             }
+        })
+        .catch(error => {
+            Swal.close();
+            console.error("Fetch Error:", error);
+            Swal.fire('خطای ارتباطی', 'مشکلی در ارتباط با سرور پیش آمد.', 'error');
         });
     }
 
@@ -217,12 +270,21 @@
 
         fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify({ action: "create_order", email: currentUser, siteName: siteName, slogan: slogan, template: template })
-        }).then(res => res.json()).then(data => {
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "create_order", email: currentUser, siteName: siteName, slogan: slogan, template: template }),
+            redirect: "follow"
+        })
+        .then(res => { if (!res.ok) throw new Error("Network error"); return res.text(); })
+        .then(text => {
+            let data = JSON.parse(text);
             Swal.close();
             currentOrderId = data.orderId;
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
+        })
+        .catch(error => {
+            Swal.close();
+            Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error');
         });
     }
 
@@ -241,18 +303,26 @@
 
         fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify({ action: "update_order_details", orderId: currentOrderId, bio: bio, contact: contactInfo, maps: mapsLink, socials: socials })
-        }).then(res => res.json()).then(data => {
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "update_order_details", orderId: currentOrderId, bio: bio, contact: contactInfo, maps: mapsLink, socials: socials }),
+            redirect: "follow"
+        })
+        .then(res => { if (!res.ok) throw new Error("Network error"); return res.text(); })
+        .then(text => {
+            let data = JSON.parse(text);
             Swal.fire('ذخیره شد', 'حالا میتوانید پرداخت را انجام دهید.', 'success');
             const payBtn = document.getElementById('payBtn');
             payBtn.disabled = false;
             payBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
             payBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        })
+        .catch(error => {
+            Swal.close();
+            Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error');
         });
     }
 
     function goToPayment() {
-        // ذخیره شناسه سفارش برای بازگشت از استرایپ
         localStorage.setItem('pendingPaymentOrderId', currentOrderId);
         window.location.href = STRIPE_LINK;
     }
@@ -261,8 +331,13 @@
     function loadOrders() {
         fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify({ action: "get_orders", email: currentUser })
-        }).then(res => res.json()).then(data => {
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "get_orders", email: currentUser }),
+            redirect: "follow"
+        })
+        .then(res => { if (!res.ok) throw new Error("Network error"); return res.text(); })
+        .then(text => {
+            let data = JSON.parse(text);
             const list = document.getElementById('ordersList');
             list.innerHTML = '';
             
@@ -295,7 +370,8 @@
                     </div>
                 `;
             });
-        });
+        })
+        .catch(error => console.error("Error loading orders:", error));
     }
 
     function retryPayment(orderId) {
@@ -315,8 +391,16 @@
             if (result.isConfirmed && result.value) {
                 fetch(GAS_URL, {
                     method: "POST",
-                    body: JSON.stringify({ action: "submit_ticket", orderId: orderId, email: currentUser, message: result.value })
-                }).then(() => Swal.fire('ارسال شد', 'پیام شما به پشتیبانی ارسال شد.', 'success'));
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "submit_ticket", orderId: orderId, email: currentUser, message: result.value }),
+                    redirect: "follow"
+                })
+                .then(res => { if (!res.ok) throw new Error("Network error"); return res.text(); })
+                .then(text => {
+                    let data = JSON.parse(text);
+                    Swal.fire('ارسال شد', 'پیام شما به پشتیبانی ارسال شد.', 'success');
+                })
+                .catch(error => Swal.fire('خطا', 'خطا در ارسال پیام', 'error'));
             }
         });
     }
