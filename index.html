@@ -22,8 +22,249 @@
     <!-- اضافه کردن FontAwesome معتبر جهانی برای آیکن های سبک و استاندارد -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- اتصال فایل CSS جداگانه -->
-    <link rel="stylesheet" href="style.css">
+    <!-- استایل‌های اختصاصی سایت (جایگزین فایل style.css) -->
+    <style>
+        /* Base Style & Pattern */
+        body { 
+            background-color: #f8fafc; 
+            color: #1e293b; 
+            overflow-x: hidden; 
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            min-height: 100vh;
+        }
+
+        /* Soft Dotted Pattern */
+        .dot-pattern {
+            background-image: radial-gradient(rgba(148, 163, 184, 0.15) 1.5px, transparent 1.5px);
+            background-size: 28px 28px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+
+        /* Typography */
+        h1, h2, h3, .font-display { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; }
+        p, input, textarea, label, select, .font-sans { font-family: 'Inter', sans-serif; }
+
+        /* Loading Screen (Modernized) */
+        #preloader {
+            position: fixed; inset: 0; z-index: 9999;
+            background-color: #FFFFFF;
+            display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease-out 1s, visibility 0.6s 1s; /* Delay hiding to show animation */
+        }
+
+        /* NEW: Preloader Brand Text Animation */
+        .preloader-brand-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1e293b;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeSlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+            letter-spacing: -0.02em;
+        }
+        @keyframes fadeSlideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Typed Cursor */
+        .typed-cursor { color: #2563eb; font-weight: 400; }
+
+        /* Smooth Dropdown for Mobile Menu */
+        .mobile-menu { 
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+            max-height: 0; 
+            opacity: 0; 
+            visibility: hidden;
+            transform: translateY(-10px);
+            overflow: hidden; 
+            top: 100%;
+            left: 0;
+        }
+        .mobile-menu.active { 
+            max-height: 500px; 
+            opacity: 1; 
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* =========================================================================
+           ANIMATIONS & EFFECTS
+           ========================================================================= */
+
+        /* Preloader Animations */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .preloader-logo-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes progressBar {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(0%); }
+        }
+        .progress-bar-animate {
+            animation: progressBar 2s ease-out forwards;
+        }
+
+        /* Periodic Shake for WhatsApp Button */
+        @keyframes periodicShake {
+            0%, 85% { transform: rotate(0) scale(1); }
+            88% { transform: rotate(-10deg) scale(1.1); }
+            91% { transform: rotate(10deg) scale(1.1); }
+            94% { transform: rotate(-10deg) scale(1.1); }
+            97% { transform: rotate(10deg) scale(1.1); }
+            100% { transform: rotate(0) scale(1); }
+        }
+        .periodic-shake {
+            animation: periodicShake 4s ease-in-out infinite;
+        }
+
+        /* Tooltip Show Animation */
+        .tooltip-show {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        /* =========================================================================
+           STANDARD PURE CSS UTILITIES
+           ========================================================================= */
+
+        ::selection { background-color: #2563eb; color: white; }
+
+        .bg-header-light { background-color: rgba(255, 255, 255, 0.95); }
+        .bg-header-dark { background-color: rgba(15, 23, 42, 0.95); }
+
+        .text-slate-900 { color: #0f172a; }
+        .text-slate-800 { color: #1e293b; }
+        .text-slate-700 { color: #334155; }
+        .text-slate-600 { color: #475569; }
+        .text-slate-500 { color: #64748b; }
+        .text-slate-400 { color: #94a3b8; }
+        .text-slate-300 { color: #cbd5e1; }
+
+        .bg-slate-950 { background-color: #020617; }
+        .bg-slate-900 { background-color: #0f172a; }
+        .bg-slate-800 { background-color: #1e293b; }
+        .bg-slate-100 { background-color: #f1f5f9; }
+        .bg-slate-50 { background-color: #f8fafc; }
+
+        .text-blue-900 { color: #1e3a8a; }
+        .text-blue-600 { color: #2563eb; }
+        .text-blue-500 { color: #3b82f6; }
+        .text-blue-400 { color: #60a5fa; }
+        .bg-blue-700 { background-color: #1d4ed8; }
+        .bg-blue-600 { background-color: #2563eb; }
+        .bg-blue-50 { background-color: #eff6ff; }
+        .border-blue-500 { border-color: #3b82f6; }
+        .border-blue-300 { border-color: #93c5fd; }
+        .border-blue-100 { border-color: #dbeafe; }
+
+        .text-emerald-900 { color: #064e3b; }
+        .text-emerald-600 { color: #059669; }
+        .text-emerald-500 { color: #10b981; }
+        .text-emerald-400 { color: #34d399; }
+        .bg-emerald-100 { background-color: #d1fae5; }
+        .bg-emerald-50 { background-color: #ecfdf5; }
+        .border-emerald-100 { border-color: #d1fae5; }
+
+        .border-slate-800 { border-color: #1e293b; }
+        .border-slate-700 { border-color: #334155; }
+        .border-slate-300 { border-color: #cbd5e1; }
+        .border-slate-200 { border-color: #e2e8f0; }
+        .border-slate-100 { border-color: #f1f5f9; }
+
+        .shadow-blue-500\/30 { box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3); }
+
+        /* Custom Values */
+        .min-h-\[85vh\] { min-height: 85vh; }
+        .min-h-\[90vh\] { min-height: 90vh; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-2xl { border-radius: 1rem; }
+        .rounded-3xl { border-radius: 1.5rem; }
+        .rounded-\[2\.5rem\] { border-radius: 2.5rem; }
+        .rounded-t-\[3rem\] { border-top-left-radius: 3rem; border-top-right-radius: 3rem; }
+        .leading-\[1\.15\] { line-height: 1.15; }
+
+        /* Interactive States */
+        .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+        .hover\:bg-blue-50:hover { background-color: #eff6ff; }
+        .hover\:text-blue-600:hover { color: #2563eb; }
+        .hover\:border-blue-600:hover { border-color: #2563eb; }
+        .hover\:border-blue-300:hover { border-color: #93c5fd; }
+        .hover\:border-slate-300:hover { border-color: #cbd5e1; }
+        .hover\:bg-slate-200:hover { background-color: #e2e8f0; }
+        .hover\:bg-slate-100:hover { background-color: #f1f5f9; }
+        .hover\:bg-slate-50:hover { background-color: #f8fafc; }
+
+        .focus\:bg-white:focus { background-color: #ffffff; }
+        .focus\:border-blue-500:focus { border-color: #3b82f6; }
+        .focus\:ring-blue-500\/10:focus { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+
+        /* Filters */
+        .backdrop-blur-md { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+
+        /* =========================================================================
+           FIXED COLORS (Resolves Tailwind CDN Arbitrary Value Bug)
+           ========================================================================= */
+        /* WhatsApp Colors */
+        .bg-\[\#25D366\], .btn-whatsapp { background-color: #25D366 !important; }
+        .hover\:bg-\[\#1EBE5A\]:hover, .btn-whatsapp:hover { background-color: #1EBE5A !important; }
+        .text-\[\#25D366\], .float-whatsapp { color: #25D366 !important; }
+
+        /* Instagram */
+        .text-\[\#E1306C\] { color: #E1306C !important; }
+        .hover\:bg-\[\#E1306C\]:hover { background-color: #E1306C !important; }
+        .border-\[\#E1306C\]\/20 { border-color: rgba(225, 48, 108, 0.2) !important; }
+
+        /* LinkedIn */
+        .text-\[\#0A66C2\] { color: #0A66C2 !important; }
+        .hover\:bg-\[\#0A66C2\]:hover { background-color: #0A66C2 !important; }
+        .border-\[\#0A66C2\]\/20 { border-color: rgba(10, 102, 194, 0.2) !important; }
+
+        /* Twitter */
+        .text-\[\#1DA1F2\] { color: #1DA1F2 !important; }
+        .hover\:bg-\[\#1DA1F2\]:hover { background-color: #1DA1F2 !important; }
+        .border-\[\#1DA1F2\]\/20 { border-color: rgba(29, 161, 242, 0.2) !important; }
+
+        /* Telegram */
+        .text-\[\#229ED9\] { color: #229ED9 !important; }
+        .hover\:bg-\[\#229ED9\]:hover { background-color: #229ED9 !important; }
+        .border-\[\#229ED9\]\/20 { border-color: rgba(34, 158, 217, 0.2) !important; }
+
+        /* =========================================================================
+           WHATSAPP TOOLTIP HIDE OVERRIDE
+           ========================================================================= */
+        #wa-tooltip { display: none !important; }
+
+        /* =========================================================================
+           WHATSAPP BUTTON FIXES (Thinner White Border & Green Glow)
+           ========================================================================= */
+        .whatsapp-container-fixed {
+            z-index: 999999 !important;
+        }
+        .whatsapp-btn-size {
+            width: 76px !important;  
+            height: 76px !important; 
+            border: 2px solid rgba(255, 255, 255, 0.8) !important; 
+            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3) !important; 
+        }
+        .whatsapp-btn-size:hover {
+            box-shadow: 0 12px 25px rgba(37, 211, 102, 0.4) !important; 
+        }
+        .whatsapp-icon-size {
+            font-size: 3rem !important; 
+        }
+    </style>
 </head>
 <body class="antialiased flex flex-col min-h-screen text-slate-800 bg-slate-50 dot-pattern">
 
@@ -282,6 +523,233 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
-    <script src="script.js"></script>
+    
+    <!-- کدهای جاوا اسکریپت (جایگزین فایل script.js) -->
+    <script>
+        // 1. Loading Screen Logic
+        window.addEventListener('load', () => {
+            const preloader = document.getElementById('preloader');
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                preloader.style.visibility = 'hidden';
+            }, 2500); // Increased time slightly to allow animation to finish
+            
+            // Trigger Floating Button Tooltip
+            setTimeout(() => {
+                const tooltip = document.getElementById('wa-tooltip');
+                if(tooltip) {
+                    tooltip.classList.add('tooltip-show');
+                    setTimeout(() => {
+                        tooltip.classList.remove('tooltip-show');
+                    }, 8000);
+                }
+            }, 4000);
+        });
+
+        // 2. Initialize Modern Icons
+        lucide.createIcons({
+            attrs: {
+                'stroke-width': 2
+            }
+        });
+
+        // 3. AOS Animation Setup
+        AOS.init({
+            once: true,
+            offset: 20,
+            easing: 'ease-out-cubic',
+        });
+
+        // 4. Typed.js Setup
+        new Typed('#typed-text', {
+            strings: ['Modern.', 'Fast.', 'Reliable.'],
+            typeSpeed: 60,
+            backSpeed: 40,
+            backDelay: 2000,
+            loop: true,
+            showCursor: true,
+            cursorChar: '|'
+        });
+
+        // 5. Inject Niche Cards
+        const niches = [
+            { name: 'Personal Branding', category: 'Identity', icon: 'user' },
+            { name: 'Beauty & Wellness', category: 'Lifestyle', icon: 'sparkles' },
+            { name: 'Fitness Coach', category: 'Health', icon: 'dumbbell' },
+            { name: 'Legal Consulting', category: 'Corporate', icon: 'scale' },
+            { name: 'Luxury Real Estate', category: 'Property', icon: 'home' },
+            { name: 'Photography Studio', category: 'Creative', icon: 'camera' },
+            { name: 'Interior Design', category: 'Architecture', icon: 'building-2' },
+            { name: 'Language Tutors', category: 'Education', icon: 'graduation-cap' },
+            { name: 'Gourmet & Bistro', category: 'Culinary', icon: 'utensils-crossed' }
+        ];
+
+        const grid = document.getElementById('niche-grid');
+        niches.forEach((niche, index) => {
+            grid.innerHTML += `
+                <a href="/link" class="anchor-link block bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-2 hover:border-blue-200 transition-all duration-300 group" data-aos="fade-up" data-aos-delay="${(index % 3) * 100}">
+                    <div class="flex items-center gap-5">
+                        <div class="bg-slate-50 w-14 h-14 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shrink-0">
+                            <i data-lucide="${niche.icon}" class="w-6 h-6"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">${niche.category}</div>
+                            <div class="font-bold text-lg text-slate-800 leading-tight group-hover:text-blue-600 transition-colors">${niche.name}</div>
+                        </div>
+                    </div>
+                </a>
+            `;
+        });
+        lucide.createIcons({ attrs: { 'stroke-width': 2 }});
+
+        // 6. Smooth FAQ Accordion
+        function toggleFaq(btn) {
+            const content = btn.nextElementSibling;
+            if (!content) return; // Defensive check
+
+            const icon = btn.querySelector('[data-lucide="chevron-down"]');
+            const iconContainer = btn.querySelector('div.bg-white, div.bg-blue-600');
+            const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+
+            // Close all other FAQ items first
+            document.querySelectorAll('#faq .bg-slate-50').forEach(item => {
+                const itemBtn = item.querySelector('button');
+                const itemContent = itemBtn.nextElementSibling;
+                const itemIcon = itemBtn.querySelector('[data-lucide="chevron-down"]');
+                const itemIconContainer = itemBtn.querySelector('div');
+
+                if (itemContent !== content && itemContent.style.maxHeight) {
+                    itemContent.style.maxHeight = null;
+                    itemContent.classList.remove('opacity-100');
+                    itemContent.classList.add('opacity-0');
+                    if(itemIcon) itemIcon.classList.remove('rotate-180');
+                    if(itemIconContainer) {
+                        itemIconContainer.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                        itemIconContainer.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
+                    }
+                }
+            });
+
+            if (!isOpen) {
+                content.style.maxHeight = content.scrollHeight + "px";
+                content.classList.remove('opacity-0');
+                content.classList.add('opacity-100');
+                if(icon) icon.classList.add('rotate-180');
+                if(iconContainer) {
+                    iconContainer.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+                    iconContainer.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+                }
+            } else {
+                content.style.maxHeight = null;
+                content.classList.remove('opacity-100');
+                content.classList.add('opacity-0');
+                if(icon) icon.classList.remove('rotate-180');
+                if(iconContainer) {
+                    iconContainer.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                    iconContainer.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
+                }
+            }
+        }
+
+        // 7. Light Parallax, Sticky Header & Floating Contact Visibility Logic
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY;
+            const nav = document.getElementById('navbar');
+            const headerTitle = document.getElementById('header-title-text');
+            const mobileBtnIcon = document.getElementById('mobileBtn');
+            const navLinks = document.querySelectorAll('#navbar nav a');
+            const startProjectSection = document.getElementById('start-project');
+            const floatingContact = document.getElementById('floating-contact');
+
+            // Header Shadow
+            if (scrolled > 20) {
+                nav.classList.add('shadow-md');
+            } else {
+                nav.classList.remove('shadow-md');
+            }
+
+            // Floating Contact Visibility (Hide in Hero section, show smoothly afterwards)
+            if (floatingContact) {
+                const windowHeight = window.innerHeight;
+                if (scrolled < windowHeight * 0.8) {
+                    floatingContact.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
+                    floatingContact.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
+                } else {
+                    floatingContact.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+                    floatingContact.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
+                }
+            }
+
+            // This logic handles changing header color.
+            const sections = document.querySelectorAll('section');
+            let isDarkSection = false;
+            sections.forEach(section => {
+                if(section.classList.contains('bg-slate-900') && scrolled + 100 > section.offsetTop) {
+                    isDarkSection = true;
+                }
+            });
+
+            if (isDarkSection) {
+                nav.classList.remove('bg-header-light', 'border-slate-200');
+                nav.classList.add('bg-header-dark', 'border-slate-700');
+                
+                if (headerTitle) {
+                    headerTitle.classList.remove('text-slate-800');
+                    headerTitle.classList.add('text-white');
+                }
+                if (mobileBtnIcon) {
+                    mobileBtnIcon.classList.remove('text-slate-800', 'bg-slate-100', 'hover:bg-slate-200');
+                    mobileBtnIcon.classList.add('text-white', 'bg-slate-800', 'hover:bg-slate-700');
+                }
+                navLinks.forEach(link => {
+                    link.classList.remove('text-slate-600');
+                    link.classList.add('text-slate-300');
+                });
+            } else {
+                nav.classList.add('bg-header-light', 'border-slate-200');
+                nav.classList.remove('bg-header-dark', 'border-slate-700');
+                
+                if (headerTitle) {
+                    headerTitle.classList.add('text-slate-800');
+                    headerTitle.classList.remove('text-white');
+                }
+                if (mobileBtnIcon) {
+                    mobileBtnIcon.classList.add('text-slate-800', 'bg-slate-100', 'hover:bg-slate-200');
+                    mobileBtnIcon.classList.remove('text-white', 'bg-slate-800', 'hover:bg-slate-700');
+                }
+                navLinks.forEach(link => {
+                    link.classList.add('text-slate-600');
+                    link.classList.remove('text-slate-300');
+                });
+            }
+        });
+
+        // 8. Mobile Menu Toggle & Auto-Close Logic
+        const mobileBtn = document.getElementById('mobileBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileBtn.addEventListener('click', () => { mobileMenu.classList.toggle('active'); });
+        document.querySelectorAll('.mobile-link').forEach(link => {
+            link.addEventListener('click', () => { mobileMenu.classList.remove('active'); });
+        });
+
+        // 9. Custom Smooth Scrolling
+        document.querySelectorAll('a[href^="#"], .anchor-link').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                let targetId = this.getAttribute('href');
+                if(!targetId || targetId === '#') { return; }
+                // For special links that should navigate naturally instead of smooth scrolling
+                if(targetId === '/panel' || targetId === '/link') { return; }
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    e.preventDefault();
+                    const headerOffset = 80;
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
