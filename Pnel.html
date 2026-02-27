@@ -19,7 +19,6 @@
         .chat-user { background-color: #eff6ff; color: #1e3a8a; border-bottom-right-radius: 0; margin-left: auto; border: 1px solid #bfdbfe; }
         .chat-admin { background-color: #f3f4f6; color: #374151; border-bottom-left-radius: 0; margin-right: auto; border: 1px solid #e5e7eb; }
 
-        /* انیمیشن استخوانی (Skeleton Loading) */
         .skeleton-box {
             background: #e2e8f0;
             background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
@@ -34,7 +33,7 @@
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwQLkWRqlL9hmsua2Q1kTNtOBWDjmPF-w0GLtottMivZYkok_tZo0JWDNs5ZuuZ1EQv/exec"; 
-    const STRIPE_LINK = "https://checkout.stripe.com/pay/لینک_شما"; 
+    const STRIPE_LINK = "https://pay.ypaylink.com/لینک_شما"; // لینک درگاه جدید
 </script>
 
 <!-- بخش احراز هویت (ورود / ثبت نام) -->
@@ -61,7 +60,6 @@
     <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-40">
         <div class="font-bold text-xl text-blue-600 flex items-center gap-3">
             <span>ToWeb</span>
-            <!-- دکمه رفرش -->
             <button onclick="loadOrders()" class="text-gray-400 hover:text-blue-600 transition" title="بروزرسانی اطلاعات"><i class="fas fa-sync-alt"></i></button>
         </div>
         <div class="flex items-center">
@@ -73,7 +71,6 @@
 
     <div class="container mx-auto p-6 max-w-5xl">
         
-        <!-- باکس ایجاد سفارش (انتقال یافته به بالا) -->
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8 flex justify-between items-center shadow-sm">
             <div>
                 <h2 class="text-lg font-bold text-blue-800">سایت جدید نیاز دارید؟</h2>
@@ -82,7 +79,6 @@
             <button onclick="showOrderForm()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 shadow-md font-bold transition"><i class="fas fa-plus ml-2"></i> ایجاد سفارش جدید</button>
         </div>
 
-        <!-- فرم ایجاد سفارش جدید -->
         <div id="newOrderForm" class="hidden bg-white p-6 rounded-xl shadow-lg mb-8 border-t-4 border-blue-600">
             <div class="flex justify-between items-center border-b pb-2 mb-4">
                 <h2 class="text-xl font-bold">ثبت سفارش جدید</h2>
@@ -132,8 +128,9 @@
 
                 <div class="flex justify-between items-center mt-6">
                     <button onclick="saveDetailsAndEnablePay()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700">ذخیره اطلاعات</button>
+                    <!-- تغییر عنوان دکمه در اینجا -->
                     <button id="payBtn" disabled class="bg-gray-400 text-white px-8 py-3 rounded-xl font-bold cursor-not-allowed flex items-center" onclick="goToPayment()">
-                        <i class="fas fa-euro-sign ml-2"></i> پرداخت (35 یورو)
+                        <i class="fas fa-euro-sign ml-2"></i> پرداخت شروع کار (35 یورو)
                     </button>
                 </div>
             </div>
@@ -146,7 +143,6 @@
     </div>
 </div>
 
-<!-- مودال نمایش اطلاعات نهایی سایت -->
 <div id="finalDataModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <h2 class="text-2xl font-bold mb-4 text-green-600 border-b pb-2">اطلاعات نهایی سایت شما</h2>
@@ -155,7 +151,6 @@
     </div>
 </div>
 
-<!-- مودال نمایش تیکت ها -->
 <div id="ticketsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col relative">
         <div class="flex justify-between items-center border-b pb-3 mb-4">
@@ -170,7 +165,6 @@
     </div>
 </div>
 
-<!-- مودال مشاهده و ویرایش اطلاعات سفارش -->
 <div id="orderDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
         <button onclick="closeModal('orderDetailsModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
@@ -197,7 +191,6 @@
     </div>
 </div>
 
-<!-- مودال جدید: اتصال دامنه -->
 <div id="domainModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg relative">
         <button onclick="closeModal('domainModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
@@ -205,7 +198,7 @@
         
         <div class="text-sm text-gray-700 mb-4 bg-purple-50 p-4 rounded-lg border border-purple-200 leading-relaxed">
             <p class="font-bold mb-2 text-purple-800">راهنمای تنظیم DNS:</p>
-            <p class="mb-2">لطفا در پنل دامنه خود، رکوردهای A زیر را به سمت سرورهای گیت‌هاب (GitHub Pages) تنظیم کرده و سپس دامنه خود را در کادر زیر وارد و ذخیره کنید:</p>
+            <p class="mb-2">لطفا در پنل دامنه خود، رکوردهای A زیر را به سمت سرورهای گیت‌هاب تنظیم کرده و سپس دامنه خود را در کادر زیر وارد و ذخیره کنید:</p>
             <ul class="list-disc list-inside bg-white p-2 rounded border" dir="ltr">
                 <li>185.199.108.153</li>
                 <li>185.199.109.153</li>
@@ -216,12 +209,10 @@
         
         <label class="block text-sm font-bold mb-2 text-gray-600">نام دامنه شما:</label>
         <input type="text" id="customDomainInput" placeholder="مثال: www.mywebsite.com" class="w-full p-3 border rounded-lg mb-4" dir="ltr" style="text-align:left;">
-        
         <button onclick="saveDomainOnly()" class="w-full bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 font-bold">ذخیره و ارسال دامنه</button>
     </div>
 </div>
 
-<!-- مودال جدید: ارسال تصاویر -->
 <div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
         <button onclick="closeModal('imageModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
@@ -235,30 +226,21 @@
             <ul class="list-disc list-inside mb-2">
                 <li>این تصاویر جایگزین تصاویر در قالب پیش‌فرض سایت شما می‌شوند.</li>
                 <li>حداکثر <strong>10 تصویر</strong> مجاز است. حجم هر تصویر باید زیر <strong>500 کیلوبایت</strong> باشد.</li>
-                <li>تصاویر کم‌حجم سرعت سایت را به شدت بالا می‌برند. برای کاهش حجم بدون افت کیفیت از سایت <a href="https://tinypng.com/" target="_blank" class="font-bold underline text-blue-900">TinyPNG.com</a> استفاده کنید.</li>
-                <li>نوشتن توضیح برای هر تصویر الزامی است (مثال: تصویر لوگو، تصویر پس‌زمینه درباره ما و...).</li>
+                <li>تصاویر کم‌حجم سرعت سایت را بالا می‌برند. برای کاهش حجم از سایت <a href="https://tinypng.com/" target="_blank" class="font-bold underline text-blue-900">TinyPNG.com</a> استفاده کنید.</li>
+                <li>نوشتن توضیح برای هر تصویر الزامی است.</li>
             </ul>
         </div>
 
         <div class="flex flex-col md:flex-row items-start gap-3 mb-6 bg-gray-50 p-4 rounded-lg border">
-            <div class="w-full md:w-1/3">
-                <input type="file" id="imageInput" accept="image/*" class="w-full border p-2 rounded-lg text-sm bg-white">
-            </div>
-            <div class="w-full md:w-1/2">
-                <input type="text" id="imageDescription" placeholder="توضیح تصویر (مثال: لوگوی بالای سایت)" class="w-full border p-2 rounded-lg text-sm">
-            </div>
+            <div class="w-full md:w-1/3"><input type="file" id="imageInput" accept="image/*" class="w-full border p-2 rounded-lg text-sm bg-white"></div>
+            <div class="w-full md:w-1/2"><input type="text" id="imageDescription" placeholder="توضیح تصویر (مثال: لوگوی سایت)" class="w-full border p-2 rounded-lg text-sm"></div>
             <div class="w-full md:w-auto">
-                <button id="uploadImgBtn" onclick="uploadOrderImage()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex justify-center items-center gap-2">
-                    <i class="fas fa-upload"></i> آپلود
-                </button>
+                <button id="uploadImgBtn" onclick="uploadOrderImage()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex justify-center items-center gap-2"><i class="fas fa-upload"></i> آپلود</button>
             </div>
         </div>
         
         <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">تصاویر اختصاصی ارسال شده شما</h3>
-        <!-- گالری با قابلیت نمایش مستقیم عکس -->
-        <div id="uploadedImagesGallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- تصاویر اینجا لود میشوند -->
-        </div>
+        <div id="uploadedImagesGallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
 </div>
 
@@ -275,13 +257,9 @@
         const passwordInput = document.getElementById('password');
         const icon = document.getElementById('togglePasswordIcon');
         if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
+            passwordInput.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
         } else {
-            passwordInput.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
+            passwordInput.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye');
         }
     }
 
@@ -295,23 +273,40 @@
         }
     }
 
+    // آپدیت شده: بررسی هوشمند رفرر ypaylink و پیام های مستقل + پشتیبانی از 2 مرحله
     function checkPaymentReturn() {
         const urlParams = new URLSearchParams(window.location.search);
         const status = urlParams.get('status');
         const pendingOrder = localStorage.getItem('pendingPaymentOrderId');
+        const pendingStage = localStorage.getItem('pendingPaymentStage') || 1; // خواندن مرحله پرداخت
 
         if (status && pendingOrder) {
+            // بررسی اینکه آیا از درگاه ypaylink ارجاع شده است؟
+            const fromYpay = document.referrer.includes("pay.ypaylink.com");
+
             Swal.fire({ title: 'در حال بررسی وضعیت...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
 
             fetch(GAS_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "update_payment", orderId: pendingOrder, status: status })
+                body: JSON.stringify({ action: "update_payment", orderId: pendingOrder, status: status, paymentStage: pendingStage })
             }).then(res => res.json()).then(data => {
                 window.history.replaceState({}, document.title, window.location.pathname); 
                 localStorage.removeItem('pendingPaymentOrderId');
-                if (status === 'success') Swal.fire('موفقیت آمیز', 'پرداخت تایید شد.', 'success');
-                else Swal.fire('خطا', 'پرداخت ناموفق بود.', 'error');
+                localStorage.removeItem('pendingPaymentStage');
+                
+                // پیام های درخواستی شما در صورت ارجاع از ypaylink
+                if (fromYpay) {
+                    if (status === 'success') {
+                        Swal.fire('پرداخت انجام شد', 'تراکنش شما با موفقیت ثبت شد.', 'success');
+                    } else {
+                        Swal.fire('تراکنش ناموفق بود', 'تراکنش نا موفق بود... لطفا مجددا تلاش کنید', 'error');
+                    }
+                } else {
+                    // پیام های پیش فرض
+                    if (status === 'success') Swal.fire('موفقیت آمیز', 'پرداخت تایید شد.', 'success');
+                    else Swal.fire('خطا', 'پرداخت ناموفق بود.', 'error');
+                }
                 loadOrders();
             }).catch(err => Swal.close());
         }
@@ -330,12 +325,10 @@
         const password = document.getElementById('password').value.trim();
         if (!email || !password) return Swal.fire('خطا', 'لطفا ایمیل و رمز عبور را وارد کنید.', 'warning');
 
-        Swal.fire({ title: 'در حال برقراری ارتباط با سرور...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+        Swal.fire({ title: 'در حال برقراری ارتباط...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
         const action = isLoginMode ? "login" : "register";
-        
         fetch(GAS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ action: action, email: email, password: password })
         }).then(res => res.json()).then(data => {
             if (data.status === "success") {
@@ -440,12 +433,13 @@
         }).catch(err => { Swal.close(); Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error'); });
     }
 
+    // آپدیت شده: پرداخت مرحله اول
     function goToPayment() {
         localStorage.setItem('pendingPaymentOrderId', currentOrderId);
+        localStorage.setItem('pendingPaymentStage', 1); // ثبت مرحله اول
         window.location.href = STRIPE_LINK;
     }
 
-    // تولید انیمیشن استخوانی
     function renderSkeleton() {
         const list = document.getElementById('ordersList');
         const skeletonCard = `
@@ -459,7 +453,7 @@
     }
 
     function loadOrders() {
-        renderSkeleton(); // نمایش لودینگ استخوانی قبل از فچ
+        renderSkeleton(); 
         
         fetch(GAS_URL, {
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -477,21 +471,32 @@
             allLoadedOrders = data.orders;
 
             data.orders.forEach(order => {
-                let statusColor = order.orderStatus === 'Completed' || order.orderStatus === 'تکمیل شده' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
-                let isPaid = (order.paymentStatus !== 'پرداخت نشده' && order.paymentStatus !== 'ناموفق');
-                let actionBtn = '';
+                let statusColor = order.orderStatus === 'Completed' || order.orderStatus === 'تکمیل شده' ? 'bg-green-100 text-green-800' : 
+                                  (order.paymentStatus === 'پیش پرداخت انجام شد' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800');
                 
-                if (!isPaid) {
-                    actionBtn = `<button onclick="retryPayment('${order.orderId}')" class="mt-4 w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 font-bold">تلاش مجدد برای پرداخت</button>`;
-                } else if (order.orderStatus === 'Completed' || order.orderStatus === 'تکمیل شده') {
+                // وضعیت های پرداخت
+                let isFullyPaid = (order.paymentStatus === 'تسویه کامل انجام شد');
+                let isFirstPaid = (order.paymentStatus === 'پیش پرداخت انجام شد');
+                let isUnpaid = (order.paymentStatus === 'پرداخت نشده' || order.paymentStatus === 'ناموفق');
+                
+                // دکمه های داینامیک 2 مرحله ای
+                let actionBtn = '';
+                if (isUnpaid) {
+                    actionBtn = `<button onclick="retryPayment('${order.orderId}', 1)" class="mt-4 w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 font-bold">تلاش مجدد پرداخت شروع کار (35 یورو)</button>`;
+                } else if (isFirstPaid) {
+                    actionBtn = `<button onclick="retryPayment('${order.orderId}', 2)" class="mt-4 w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 font-bold shadow-md animate-pulse">پرداخت تسویه حساب (35 یورو)</button>`;
+                }
+
+                if (isFullyPaid || order.orderStatus === 'Completed' || order.orderStatus === 'تکمیل شده') {
                     actionBtn = `<button onclick='showFinalData(${JSON.stringify(order)})' class="mt-4 w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 shadow-lg animate-pulse font-bold">مشاهده اطلاعات تحویلی سایت</button>`;
                 }
 
-                // آیکن‌های روی کارت بر اساس وضعیت پرداخت داینامیک شدند
+                let isAtLeastFirstPaid = (!isUnpaid);
+
                 list.innerHTML += `
                     <div class="bg-white p-5 rounded-xl shadow-md border border-gray-100 relative">
                         <div class="absolute top-3 left-3 flex gap-3 bg-gray-50 px-2 py-1 rounded-lg border">
-                            ${isPaid ? `
+                            ${isAtLeastFirstPaid ? `
                                 <span class="cursor-pointer text-gray-500 hover:text-purple-600 transition" onclick="openDomainModal('${order.orderId}')" title="اتصال دامنه"><i class="fas fa-globe"></i></span>
                                 <span class="cursor-pointer text-gray-500 hover:text-blue-600 transition" onclick="openImageModal('${order.orderId}')" title="ارسال تصاویر"><i class="fas fa-images"></i></span>
                                 <span class="cursor-pointer text-gray-500 hover:text-green-600 transition" onclick="openOrderDetailsModal('${order.orderId}')" title="مشاهده اطلاعات"><i class="fas fa-eye"></i></span>
@@ -518,7 +523,13 @@
         });
     }
 
-    // مودال مشاهده و ویرایش
+    // آپدیت شده: تابع تلاش مجدد با قابلیت دریافت شماره مرحله
+    function retryPayment(orderId, stage) {
+        localStorage.setItem('pendingPaymentOrderId', orderId);
+        localStorage.setItem('pendingPaymentStage', stage);
+        window.location.href = STRIPE_LINK;
+    }
+
     function openOrderDetailsModal(orderId) {
         const order = allLoadedOrders.find(o => o.orderId === orderId);
         if(!order) return;
@@ -560,18 +571,17 @@
                 siteName: document.getElementById('viewSiteName').value, slogan: document.getElementById('viewSlogan').value,
                 template: document.getElementById('viewTemplate').value, bio: document.getElementById('viewBio').value,
                 contact: document.getElementById('viewContact').value, maps: document.getElementById('viewMaps').value,
-                socials: document.getElementById('viewSocials').value, domain: "" // دامنه از بخش خودش مدیریت میشه
+                socials: document.getElementById('viewSocials').value, domain: "" 
             })
         }).then(res => res.json()).then(data => {
             btn.innerText = 'ذخیره تغییرات سفارش'; btn.disabled = false;
             if(data.status === 'success') {
                 Swal.fire({title: 'موفق', text: 'ویرایش شد', icon: 'success', timer: 1500, showConfirmButton: false});
-                loadOrders(); // رفرش خودکار بعد از ویرایش
+                loadOrders(); 
             } else Swal.fire('خطا', data.message, 'error');
         }).catch(err => { btn.innerText = 'ذخیره'; btn.disabled = false; });
     }
 
-    // مودال دامنه
     function openDomainModal(orderId) {
         activeActionOrderId = orderId;
         const order = allLoadedOrders.find(o => o.orderId === orderId);
@@ -588,12 +598,11 @@
         }).then(res => res.json()).then(data => {
             if(data.status === 'success') {
                 Swal.fire('موفق', data.message, 'success');
-                loadOrders(); // رفرش خودکار
+                loadOrders(); 
             } else Swal.fire('خطا', data.message, 'error');
         });
     }
 
-    // مودال تصویر
     function openImageModal(orderId) {
         activeActionOrderId = orderId;
         const order = allLoadedOrders.find(o => o.orderId === orderId);
@@ -611,7 +620,6 @@
         if(!desc) return alert('نوشتن توضیح برای تصویر الزامی است.');
         if(file.size > 512000) return Swal.fire('خطا', 'حجم تصویر باید زیر 500 کیلوبایت باشد.', 'error');
 
-        // محدودیت سمت کلاینت
         const order = allLoadedOrders.find(o => o.orderId === activeActionOrderId);
         if(order.images && order.images.length >= 10) return Swal.fire('خطا', 'حداکثر 10 تصویر مجاز است.', 'error');
 
@@ -634,8 +642,8 @@
                 if(data.status === 'success') {
                     fileInput.value = ''; descInput.value = '';
                     Swal.fire({title: 'موفق', text: 'تصویر آپلود شد', icon: 'success', timer: 1500});
-                    loadOrders(); // رفرش برای دریافت لینک جدید تصویر
-                    setTimeout(() => openImageModal(activeActionOrderId), 1500); // باز کردن مجدد مودال
+                    loadOrders(); 
+                    setTimeout(() => openImageModal(activeActionOrderId), 1500); 
                 } else Swal.fire('خطا', data.message, 'error');
             }).catch(err => { btn.innerHTML = oldHtml; btn.disabled = false; });
         };
@@ -655,7 +663,6 @@
 
         badge.innerText = `${imagesArray.length} / 10`;
         imagesArray.forEach((img, index) => {
-            // نمایش تصویر به صورت <img> تگ با لینک مستقیم گوگل درایو
             gallery.innerHTML += `
                 <div class="border rounded-lg p-2 bg-white shadow-sm flex flex-col">
                     <div class="h-32 w-full mb-2 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
@@ -666,8 +673,6 @@
             `;
         });
     }
-
-    function retryPayment(orderId) { localStorage.setItem('pendingPaymentOrderId', orderId); window.location.href = STRIPE_LINK; }
 
     function openTicketsModal(orderId) {
         activeTicketOrderId = orderId;
@@ -703,7 +708,7 @@
             body: JSON.stringify({ action: "submit_ticket", orderId: activeTicketOrderId, email: currentUser, message: msg })
         }).then(res => res.json()).then(data => {
             msgInput.value = ''; msgInput.disabled = false;
-            loadOrders(); // رفرش کل
+            loadOrders(); 
             setTimeout(() => openTicketsModal(activeTicketOrderId), 1000); 
         });
     }
