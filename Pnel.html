@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پنل کاربری سفارش سایت</title>
+    <title>ToWeb Panel</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -18,6 +18,16 @@
         .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; font-size: 0.9rem; }
         .chat-user { background-color: #eff6ff; color: #1e3a8a; border-bottom-right-radius: 0; margin-left: auto; border: 1px solid #bfdbfe; }
         .chat-admin { background-color: #f3f4f6; color: #374151; border-bottom-left-radius: 0; margin-right: auto; border: 1px solid #e5e7eb; }
+
+        /* انیمیشن استخوانی (Skeleton Loading) */
+        .skeleton-box {
+            background: #e2e8f0;
+            background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite linear;
+            border-radius: 8px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 <body class="text-gray-800">
@@ -48,8 +58,12 @@
 
 <!-- بخش پنل کاربری -->
 <div id="dashboardSection" class="hidden min-h-screen">
-    <nav class="bg-white shadow-md p-4 flex justify-between items-center">
-        <div class="font-bold text-xl text-blue-600">پنل کاربری</div>
+    <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-40">
+        <div class="font-bold text-xl text-blue-600 flex items-center gap-3">
+            <span>ToWeb</span>
+            <!-- دکمه رفرش -->
+            <button onclick="loadOrders()" class="text-gray-400 hover:text-blue-600 transition" title="بروزرسانی اطلاعات"><i class="fas fa-sync-alt"></i></button>
+        </div>
         <div class="flex items-center">
             <span id="userEmailDisplay" class="ml-4 text-sm text-gray-600 hidden md:inline"></span>
             <button onclick="changePassword()" class="text-gray-600 hover:text-blue-600 ml-4 text-sm transition"><i class="fas fa-key"></i> تغییر رمز</button>
@@ -58,18 +72,22 @@
     </nav>
 
     <div class="container mx-auto p-6 max-w-5xl">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">سفارشات من</h1>
-            <button onclick="showOrderForm()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-md"><i class="fas fa-plus ml-2"></i> ایجاد سفارش جدید</button>
-        </div>
-
-        <div id="ordersList" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- سفارشات اینجا لود میشوند -->
+        
+        <!-- باکس ایجاد سفارش (انتقال یافته به بالا) -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8 flex justify-between items-center shadow-sm">
+            <div>
+                <h2 class="text-lg font-bold text-blue-800">سایت جدید نیاز دارید؟</h2>
+                <p class="text-sm text-blue-600">همین حالا سفارش جدید خود را ثبت و اطلاعات را تکمیل کنید.</p>
+            </div>
+            <button onclick="showOrderForm()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 shadow-md font-bold transition"><i class="fas fa-plus ml-2"></i> ایجاد سفارش جدید</button>
         </div>
 
         <!-- فرم ایجاد سفارش جدید -->
-        <div id="newOrderForm" class="hidden bg-white p-6 rounded-xl shadow-lg mt-6">
-            <h2 class="text-xl font-bold mb-4 border-b pb-2">ثبت سفارش جدید</h2>
+        <div id="newOrderForm" class="hidden bg-white p-6 rounded-xl shadow-lg mb-8 border-t-4 border-blue-600">
+            <div class="flex justify-between items-center border-b pb-2 mb-4">
+                <h2 class="text-xl font-bold">ثبت سفارش جدید</h2>
+                <button onclick="closeOrderForm()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
             
             <div id="step1">
                 <input type="text" id="siteName" placeholder="نام سایت" class="w-full mb-4 p-3 border rounded-lg">
@@ -108,13 +126,8 @@
                     <input type="text" id="socLi" placeholder="لینکدین" class="p-2 border rounded-lg text-sm" dir="ltr">
                 </div>
 
-                <!-- بخش جدید: فیلد دامنه اختصاصی -->
-                <div class="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
-                    <label class="flex items-center space-x-2 space-x-reverse cursor-pointer mb-2">
-                        <input type="checkbox" id="hasDomainCheckbox" onchange="toggleDomainInput()" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
-                        <span class="text-sm font-bold text-gray-700">دامنه اختصاصی دارم و می‌خواهم متصل شود</span>
-                    </label>
-                    <input type="text" id="customDomain" placeholder="مثال: www.mywebsite.com" class="w-full mt-2 p-3 border rounded-lg hidden" dir="ltr" style="text-align: left;">
+                <div class="bg-blue-50 text-blue-800 p-3 rounded-lg mb-4 text-sm font-bold text-center border border-blue-200">
+                    <i class="fas fa-info-circle"></i> امکان افزودن تصاویر سفارشی و اتصال دامنه اختصاصی، پس از پرداخت موفق برای شما فعال خواهد شد.
                 </div>
 
                 <div class="flex justify-between items-center mt-6">
@@ -124,6 +137,11 @@
                     </button>
                 </div>
             </div>
+        </div>
+
+        <h1 class="text-2xl font-bold mb-6">سفارشات من</h1>
+        <div id="ordersList" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- سفارشات اینجا لود میشوند -->
         </div>
     </div>
 </div>
@@ -139,7 +157,7 @@
 
 <!-- مودال نمایش تیکت ها -->
 <div id="ticketsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col relative">
         <div class="flex justify-between items-center border-b pb-3 mb-4">
             <h2 class="text-xl font-bold text-blue-600">پشتیبانی سفارش: <span id="ticketOrderIdDisplay" class="text-sm text-gray-500"></span></h2>
             <button onclick="closeModal('ticketsModal')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
@@ -152,7 +170,7 @@
     </div>
 </div>
 
-<!-- مودال جدید: مشاهده و ویرایش اطلاعات سفارش + آپلود تصویر -->
+<!-- مودال مشاهده و ویرایش اطلاعات سفارش -->
 <div id="orderDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
         <button onclick="closeModal('orderDetailsModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
@@ -160,6 +178,9 @@
         
         <div id="editWarningMessage" class="hidden bg-yellow-50 text-yellow-800 p-3 rounded-lg mb-4 text-sm font-bold border border-yellow-200">
             <i class="fas fa-info-circle"></i> چون پرداخت انجام نشده است، می‌توانید اطلاعات را ویرایش کنید.
+        </div>
+        <div id="viewOnlyMessage" class="hidden bg-gray-50 text-gray-600 p-3 rounded-lg mb-4 text-sm border border-gray-200">
+            <i class="fas fa-lock"></i> این سفارش پرداخت شده است و اطلاعات آن قابل ویرایش نیست.
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -170,33 +191,73 @@
             <div class="md:col-span-2"><label class="text-xs text-gray-500 block">اطلاعات تماس (ترکیبی)</label><input type="text" id="viewContact" class="w-full p-2 border rounded bg-gray-50 disabled:text-gray-600"></div>
             <div class="md:col-span-2"><label class="text-xs text-gray-500 block">لینک نقشه</label><input type="text" id="viewMaps" class="w-full p-2 border rounded bg-gray-50 disabled:text-gray-600" dir="ltr" style="text-align:left;"></div>
             <div class="md:col-span-2"><label class="text-xs text-gray-500 block">شبکه‌های اجتماعی</label><input type="text" id="viewSocials" class="w-full p-2 border rounded bg-gray-50 disabled:text-gray-600" dir="ltr" style="text-align:left;"></div>
-            <div class="md:col-span-2"><label class="text-xs text-gray-500 block">دامنه اختصاصی (اختیاری)</label><input type="text" id="viewDomain" class="w-full p-2 border rounded bg-gray-50 disabled:text-gray-600" dir="ltr" style="text-align:left;"></div>
         </div>
 
-        <!-- دکمه ذخیره تغییرات (فقط برای قبل از پرداخت) -->
-        <button id="saveEditBtn" onclick="saveEditedOrder()" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 font-bold mb-6 hidden">ذخیره تغییرات سفارش</button>
+        <button id="saveEditBtn" onclick="saveEditedOrder()" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 font-bold mb-2 hidden">ذخیره تغییرات سفارش</button>
+    </div>
+</div>
 
-        <!-- بخش آپلود تصاویر (فقط برای بعد از پرداخت) -->
-        <div id="imageUploadSection" class="hidden mt-6 pt-4 border-t border-gray-200">
-            <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fas fa-images text-blue-500"></i> ارسال تصاویر برای سایت</h3>
-            
-            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4 text-sm text-blue-800 leading-relaxed">
-                <i class="fas fa-lightbulb text-yellow-500 text-lg mb-1 block"></i> 
-                <strong>نکته مهم:</strong> حداکثر حجم مجاز برای هر تصویر <strong>500 کیلوبایت</strong> است. تصاویر کم‌حجم باعث افزایش شدید سرعت سایت شما می‌شوند. 
-                برای کاهش حجم تصاویر بدون افت کیفیت، حتماً از سایت <a href="https://tinypng.com/" target="_blank" class="font-bold underline text-blue-900">TinyPNG.com</a> استفاده کنید.
+<!-- مودال جدید: اتصال دامنه -->
+<div id="domainModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg relative">
+        <button onclick="closeModal('domainModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold text-purple-600 mb-4 border-b pb-2"><i class="fas fa-globe"></i> اتصال دامنه اختصاصی (.com و...)</h2>
+        
+        <div class="text-sm text-gray-700 mb-4 bg-purple-50 p-4 rounded-lg border border-purple-200 leading-relaxed">
+            <p class="font-bold mb-2 text-purple-800">راهنمای تنظیم DNS:</p>
+            <p class="mb-2">لطفا در پنل دامنه خود، رکوردهای A زیر را به سمت سرورهای گیت‌هاب (GitHub Pages) تنظیم کرده و سپس دامنه خود را در کادر زیر وارد و ذخیره کنید:</p>
+            <ul class="list-disc list-inside bg-white p-2 rounded border" dir="ltr">
+                <li>185.199.108.153</li>
+                <li>185.199.109.153</li>
+                <li>185.199.110.153</li>
+                <li>185.199.111.153</li>
+            </ul>
+        </div>
+        
+        <label class="block text-sm font-bold mb-2 text-gray-600">نام دامنه شما:</label>
+        <input type="text" id="customDomainInput" placeholder="مثال: www.mywebsite.com" class="w-full p-3 border rounded-lg mb-4" dir="ltr" style="text-align:left;">
+        
+        <button onclick="saveDomainOnly()" class="w-full bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 font-bold">ذخیره و ارسال دامنه</button>
+    </div>
+</div>
+
+<!-- مودال جدید: ارسال تصاویر -->
+<div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('imageModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold text-blue-600 mb-4 border-b pb-2 flex items-center gap-2">
+            <i class="fas fa-images"></i> گالری تصاویر سایت
+            <span id="imageCountBadge" class="bg-gray-200 text-gray-800 text-xs px-2 py-1 rounded-full ml-auto">0 / 10</span>
+        </h2>
+        
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4 text-sm text-blue-800 leading-relaxed">
+            <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> راهنمای ارسال تصویر:</p>
+            <ul class="list-disc list-inside mb-2">
+                <li>این تصاویر جایگزین تصاویر در قالب پیش‌فرض سایت شما می‌شوند.</li>
+                <li>حداکثر <strong>10 تصویر</strong> مجاز است. حجم هر تصویر باید زیر <strong>500 کیلوبایت</strong> باشد.</li>
+                <li>تصاویر کم‌حجم سرعت سایت را به شدت بالا می‌برند. برای کاهش حجم بدون افت کیفیت از سایت <a href="https://tinypng.com/" target="_blank" class="font-bold underline text-blue-900">TinyPNG.com</a> استفاده کنید.</li>
+                <li>نوشتن توضیح برای هر تصویر الزامی است (مثال: تصویر لوگو، تصویر پس‌زمینه درباره ما و...).</li>
+            </ul>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-start gap-3 mb-6 bg-gray-50 p-4 rounded-lg border">
+            <div class="w-full md:w-1/3">
+                <input type="file" id="imageInput" accept="image/*" class="w-full border p-2 rounded-lg text-sm bg-white">
             </div>
-
-            <div class="flex items-center gap-2 mb-4">
-                <input type="file" id="imageInput" accept="image/*" class="flex-1 border p-2 rounded-lg text-sm">
-                <button id="uploadImgBtn" onclick="uploadOrderImage()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                    <i class="fas fa-cloud-upload-alt"></i> <span>آپلود تصویر</span>
+            <div class="w-full md:w-1/2">
+                <input type="text" id="imageDescription" placeholder="توضیح تصویر (مثال: لوگوی بالای سایت)" class="w-full border p-2 rounded-lg text-sm">
+            </div>
+            <div class="w-full md:w-auto">
+                <button id="uploadImgBtn" onclick="uploadOrderImage()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex justify-center items-center gap-2">
+                    <i class="fas fa-upload"></i> آپلود
                 </button>
             </div>
-            
-            <p class="text-xs text-gray-500 mb-2">تصاویر ارسال شده تا کنون:</p>
-            <div id="uploadedImagesGallery" class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <!-- گالری لینک تصاویر -->
-            </div>
+        </div>
+        
+        <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">تصاویر اختصاصی ارسال شده شما</h3>
+        <!-- گالری با قابلیت نمایش مستقیم عکس -->
+        <div id="uploadedImagesGallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- تصاویر اینجا لود میشوند -->
         </div>
     </div>
 </div>
@@ -207,6 +268,7 @@
     let currentOrderId = null; 
     let activeTicketOrderId = null; 
     let activeEditOrderId = null;
+    let activeActionOrderId = null; 
     let allLoadedOrders = []; 
 
     function togglePasswordVisibility() {
@@ -221,14 +283,6 @@
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');
         }
-    }
-
-    // منطق نمایش فیلد دامنه
-    function toggleDomainInput() {
-        const chk = document.getElementById('hasDomainCheckbox');
-        const inp = document.getElementById('customDomain');
-        if(chk.checked) inp.classList.remove('hidden');
-        else { inp.classList.add('hidden'); inp.value = ''; }
     }
 
     window.onload = function() {
@@ -247,25 +301,19 @@
         const pendingOrder = localStorage.getItem('pendingPaymentOrderId');
 
         if (status && pendingOrder) {
-            Swal.fire({ title: 'در حال بررسی وضعیت پرداخت...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+            Swal.fire({ title: 'در حال بررسی وضعیت...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
 
             fetch(GAS_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "update_payment", orderId: pendingOrder, status: status })
-            })
-            .then(res => res.json())
-            .then(data => {
+            }).then(res => res.json()).then(data => {
                 window.history.replaceState({}, document.title, window.location.pathname); 
                 localStorage.removeItem('pendingPaymentOrderId');
-                if (status === 'success') {
-                    Swal.fire('موفقیت آمیز', 'پرداخت تایید شد و سفارش در حال بررسی است.', 'success');
-                } else {
-                    Swal.fire('خطا', 'پرداخت ناموفق بود.', 'error');
-                }
+                if (status === 'success') Swal.fire('موفقیت آمیز', 'پرداخت تایید شد.', 'success');
+                else Swal.fire('خطا', 'پرداخت ناموفق بود.', 'error');
                 loadOrders();
-            })
-            .catch(error => { Swal.close(); console.error("Error:", error); });
+            }).catch(err => Swal.close());
         }
     }
 
@@ -289,36 +337,27 @@
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ action: action, email: email, password: password })
-        }).then(response => response.json()).then(data => {
+        }).then(res => res.json()).then(data => {
             if (data.status === "success") {
                 Swal.fire('موفق', isLoginMode ? 'با موفقیت وارد شدید' : 'حساب ساخته شد', 'success');
                 localStorage.setItem('userEmail', email);
                 setTimeout(() => window.location.reload(), 1500);
-            } else {
-                Swal.fire('خطا', data.message || "خطای نامشخص", 'error');
-            }
-        }).catch(error => {
-            Swal.close(); Swal.fire('خطای ارتباطی', 'مشکلی در ارتباط با سرور پیش آمد.', 'error');
-        });
+            } else Swal.fire('خطا', data.message, 'error');
+        }).catch(err => { Swal.close(); Swal.fire('خطا', 'مشکل ارتباطی.', 'error'); });
     }
 
     function forgotPassword() {
         Swal.fire({
-            title: 'فراموشی رمز عبور',
-            text: 'ایمیل حساب کاربری خود را وارد کنید:',
-            input: 'email',
-            showCancelButton: true,
-            confirmButtonText: 'ارسال رمز',
-            cancelButtonText: 'انصراف'
+            title: 'فراموشی رمز', text: 'ایمیل خود را وارد کنید:', input: 'email',
+            showCancelButton: true, confirmButtonText: 'ارسال رمز', cancelButtonText: 'انصراف'
         }).then((result) => {
             if (result.isConfirmed && result.value) {
-                Swal.fire({ title: 'در حال ارسال ایمیل...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+                Swal.fire({ title: 'در حال ارسال...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
                 fetch(GAS_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "forgot_password", email: result.value })
                 }).then(res => res.json()).then(data => {
-                    if(data.status === 'success') Swal.fire('ارسال شد', data.message, 'success');
+                    if(data.status === 'success') Swal.fire('موفق', data.message, 'success');
                     else Swal.fire('خطا', data.message, 'error');
                 });
             }
@@ -328,13 +367,8 @@
     function changePassword() {
         Swal.fire({
             title: 'تغییر رمز عبور',
-            html: `
-                <input type="password" id="oldPass" class="swal2-input" placeholder="رمز عبور فعلی">
-                <input type="password" id="newPass" class="swal2-input" placeholder="رمز عبور جدید">
-            `,
-            confirmButtonText: 'تغییر رمز',
-            showCancelButton: true,
-            cancelButtonText: 'انصراف',
+            html: `<input type="password" id="oldPass" class="swal2-input" placeholder="رمز فعلی"><input type="password" id="newPass" class="swal2-input" placeholder="رمز جدید">`,
+            confirmButtonText: 'تغییر رمز', showCancelButton: true, cancelButtonText: 'انصراف',
             preConfirm: () => {
                 const oldPass = Swal.getPopup().querySelector('#oldPass').value;
                 const newPass = Swal.getPopup().querySelector('#newPass').value;
@@ -343,10 +377,9 @@
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({ title: 'در حال تغییر رمز...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+                Swal.fire({ title: 'در حال تغییر...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
                 fetch(GAS_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "change_password", email: currentUser, oldPassword: result.value.oldPass, newPassword: result.value.newPass })
                 }).then(res => res.json()).then(data => {
                     if(data.status === 'success') Swal.fire('موفق', data.message, 'success');
@@ -356,16 +389,14 @@
         });
     }
 
-    function logout() {
-        localStorage.removeItem('userEmail');
-        window.location.reload();
-    }
+    function logout() { localStorage.removeItem('userEmail'); window.location.reload(); }
 
     function showOrderForm() {
         document.getElementById('newOrderForm').classList.remove('hidden');
         document.getElementById('step1').classList.remove('hidden');
         document.getElementById('step2').classList.add('hidden');
     }
+    function closeOrderForm() { document.getElementById('newOrderForm').classList.add('hidden'); }
 
     function submitStep1() {
         const siteName = document.getElementById('siteName').value;
@@ -375,15 +406,13 @@
 
         Swal.fire({ title: 'در حال ایجاد سفارش...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
         fetch(GAS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ action: "create_order", email: currentUser, siteName: siteName, slogan: slogan, template: template })
         }).then(res => res.json()).then(data => {
-            Swal.close();
-            currentOrderId = data.orderId;
+            Swal.close(); currentOrderId = data.orderId;
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
-        }).catch(error => { Swal.close(); Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error'); });
+        }).catch(err => { Swal.close(); Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error'); });
     }
 
     function saveDetailsAndEnablePay() {
@@ -391,30 +420,24 @@
         const address = document.getElementById('contactAddress').value.trim();
         const phone = document.getElementById('contactPhone').value.trim();
         const email = document.getElementById('contactEmail').value.trim();
-        
-        if (!bio || (!address && !phone && !email)) {
-            return Swal.fire('خطا', 'وارد کردن بیوگرافی و حداقل یک راه ارتباطی الزامی است.', 'warning');
-        }
+        if (!bio || (!address && !phone && !email)) return Swal.fire('خطا', 'وارد کردن بیوگرافی و حداقل یک راه ارتباطی الزامی است.', 'warning');
 
         const combinedContact = `آدرس: ${address || '---'} | تلفن: ${phone || '---'} | ایمیل: ${email || '---'}`;
         const mapsLink = document.getElementById('mapsLink').value;
         const socials = `Insta:${document.getElementById('socInsta').value}, FB:${document.getElementById('socFb').value}, WA:${document.getElementById('socWa').value}, LI:${document.getElementById('socLi').value}`;
-        const domain = document.getElementById('customDomain').value.trim();
 
         Swal.fire({ title: 'در حال ذخیره...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
-
         fetch(GAS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "update_order_details", orderId: currentOrderId, bio: bio, contact: combinedContact, maps: mapsLink, socials: socials, domain: domain })
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "update_order_details", orderId: currentOrderId, bio: bio, contact: combinedContact, maps: mapsLink, socials: socials })
         }).then(res => res.json()).then(data => {
             Swal.fire('ذخیره شد', 'حالا میتوانید پرداخت را انجام دهید.', 'success');
             const payBtn = document.getElementById('payBtn');
             payBtn.disabled = false;
             payBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
             payBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-            loadOrders(); // رفرش لیست
-        }).catch(error => { Swal.close(); Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error'); });
+            loadOrders(); 
+        }).catch(err => { Swal.close(); Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error'); });
     }
 
     function goToPayment() {
@@ -422,10 +445,24 @@
         window.location.href = STRIPE_LINK;
     }
 
+    // تولید انیمیشن استخوانی
+    function renderSkeleton() {
+        const list = document.getElementById('ordersList');
+        const skeletonCard = `
+            <div class="bg-white p-5 rounded-xl shadow-md border border-gray-100">
+                <div class="skeleton-box h-6 w-1/2 mb-4"></div>
+                <div class="skeleton-box h-4 w-1/3 mb-2"></div>
+                <div class="skeleton-box h-4 w-1/4 mb-4"></div>
+                <div class="skeleton-box h-10 w-full mt-4"></div>
+            </div>`;
+        list.innerHTML = skeletonCard + skeletonCard;
+    }
+
     function loadOrders() {
+        renderSkeleton(); // نمایش لودینگ استخوانی قبل از فچ
+        
         fetch(GAS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ action: "get_orders", email: currentUser })
         }).then(res => res.json()).then(data => {
             const list = document.getElementById('ordersList');
@@ -441,22 +478,29 @@
 
             data.orders.forEach(order => {
                 let statusColor = order.orderStatus === 'Completed' || order.orderStatus === 'تکمیل شده' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
-                
+                let isPaid = (order.paymentStatus !== 'پرداخت نشده' && order.paymentStatus !== 'ناموفق');
                 let actionBtn = '';
-                if (order.paymentStatus === 'پرداخت نشده' || order.paymentStatus === 'ناموفق') {
-                    actionBtn = `<button onclick="retryPayment('${order.orderId}')" class="mt-4 w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600">تلاش مجدد برای پرداخت</button>`;
+                
+                if (!isPaid) {
+                    actionBtn = `<button onclick="retryPayment('${order.orderId}')" class="mt-4 w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 font-bold">تلاش مجدد برای پرداخت</button>`;
                 } else if (order.orderStatus === 'Completed' || order.orderStatus === 'تکمیل شده') {
-                    actionBtn = `<button onclick='showFinalData(${JSON.stringify(order)})' class="mt-4 w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 shadow-lg animate-pulse">مشاهده اطلاعات نهایی سایت</button>`;
+                    actionBtn = `<button onclick='showFinalData(${JSON.stringify(order)})' class="mt-4 w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 shadow-lg animate-pulse font-bold">مشاهده اطلاعات تحویلی سایت</button>`;
                 }
 
-                // آیکون جدید مشاهده/ویرایش اطلاعات به هدر کارت اضافه شد
+                // آیکن‌های روی کارت بر اساس وضعیت پرداخت داینامیک شدند
                 list.innerHTML += `
                     <div class="bg-white p-5 rounded-xl shadow-md border border-gray-100 relative">
-                        <div class="absolute top-3 left-3 flex gap-4">
-                            <span class="cursor-pointer text-gray-400 hover:text-green-600 transition" onclick="openOrderDetailsModal('${order.orderId}')" title="مشاهده و ویرایش اطلاعات"><i class="fas fa-edit text-xl"></i></span>
-                            <span class="cursor-pointer text-gray-400 hover:text-blue-500 transition" onclick="openTicketsModal('${order.orderId}')" title="تاریخچه گفتگو و پشتیبانی"><i class="fas fa-comments text-xl"></i></span>
+                        <div class="absolute top-3 left-3 flex gap-3 bg-gray-50 px-2 py-1 rounded-lg border">
+                            ${isPaid ? `
+                                <span class="cursor-pointer text-gray-500 hover:text-purple-600 transition" onclick="openDomainModal('${order.orderId}')" title="اتصال دامنه"><i class="fas fa-globe"></i></span>
+                                <span class="cursor-pointer text-gray-500 hover:text-blue-600 transition" onclick="openImageModal('${order.orderId}')" title="ارسال تصاویر"><i class="fas fa-images"></i></span>
+                                <span class="cursor-pointer text-gray-500 hover:text-green-600 transition" onclick="openOrderDetailsModal('${order.orderId}')" title="مشاهده اطلاعات"><i class="fas fa-eye"></i></span>
+                            ` : `
+                                <span class="cursor-pointer text-gray-500 hover:text-orange-500 transition" onclick="openOrderDetailsModal('${order.orderId}')" title="ویرایش اطلاعات"><i class="fas fa-edit"></i></span>
+                            `}
+                            <span class="cursor-pointer text-gray-500 hover:text-blue-500 transition border-r pr-2 ml-1" onclick="openTicketsModal('${order.orderId}')" title="پشتیبانی"><i class="fas fa-comments"></i></span>
                         </div>
-                        <h3 class="font-bold text-lg mb-2">${order.siteName}</h3>
+                        <h3 class="font-bold text-lg mb-2 mt-4">${order.siteName}</h3>
                         <p class="text-sm text-gray-600 mb-1"><span class="font-bold">قالب:</span> ${order.template}</p>
                         <p class="text-sm text-gray-600 mb-1"><span class="font-bold">کد سفارش:</span> ${order.orderId}</p>
                         <p class="text-xs text-gray-500 mt-2">تاریخ ثبت: <span dir="ltr">${order.regDate}</span></p>
@@ -469,10 +513,12 @@
                     </div>
                 `;
             });
-        }).catch(error => console.error("Error loading orders:", error));
+        }).catch(err => {
+            document.getElementById('ordersList').innerHTML = '<p class="text-red-500">خطا در بارگیری اطلاعات.</p>';
+        });
     }
 
-    // منطق جدید: باز کردن مودال مشاهده/ویرایش اطلاعات
+    // مودال مشاهده و ویرایش
     function openOrderDetailsModal(orderId) {
         const order = allLoadedOrders.find(o => o.orderId === orderId);
         if(!order) return;
@@ -486,149 +532,146 @@
         document.getElementById('viewContact').value = order.contactInfo;
         document.getElementById('viewMaps').value = order.maps;
         document.getElementById('viewSocials').value = order.socials;
-        document.getElementById('viewDomain').value = order.domain || '';
 
         const isUnpaid = (order.paymentStatus === 'پرداخت نشده' || order.paymentStatus === 'ناموفق');
-        
-        // باز و بسته کردن قابلیت ویرایش فیلدها
-        const fields = ['viewSiteName', 'viewSlogan', 'viewTemplate', 'viewBio', 'viewContact', 'viewMaps', 'viewSocials', 'viewDomain'];
+        const fields = ['viewSiteName', 'viewSlogan', 'viewTemplate', 'viewBio', 'viewContact', 'viewMaps', 'viewSocials'];
         fields.forEach(f => document.getElementById(f).disabled = !isUnpaid);
 
         if(isUnpaid) {
             document.getElementById('editWarningMessage').classList.remove('hidden');
+            document.getElementById('viewOnlyMessage').classList.add('hidden');
             document.getElementById('saveEditBtn').classList.remove('hidden');
-            document.getElementById('imageUploadSection').classList.add('hidden');
         } else {
             document.getElementById('editWarningMessage').classList.add('hidden');
+            document.getElementById('viewOnlyMessage').classList.remove('hidden');
             document.getElementById('saveEditBtn').classList.add('hidden');
-            document.getElementById('imageUploadSection').classList.remove('hidden'); // نمایش بخش آپلود تصویر
-            renderImagesGallery(order.images);
         }
-
         document.getElementById('orderDetailsModal').classList.remove('hidden');
     }
 
-    // منطق جدید: ذخیره ویرایش قبل از پرداخت
     function saveEditedOrder() {
         const btn = document.getElementById('saveEditBtn');
-        btn.innerText = 'در حال ذخیره...';
-        btn.disabled = true;
-
-        const updatedData = {
-            action: "update_full_order",
-            orderId: activeEditOrderId,
-            siteName: document.getElementById('viewSiteName').value,
-            slogan: document.getElementById('viewSlogan').value,
-            template: document.getElementById('viewTemplate').value,
-            bio: document.getElementById('viewBio').value,
-            contact: document.getElementById('viewContact').value,
-            maps: document.getElementById('viewMaps').value,
-            socials: document.getElementById('viewSocials').value,
-            domain: document.getElementById('viewDomain').value
-        };
+        btn.innerText = 'در حال ذخیره...'; btn.disabled = true;
 
         fetch(GAS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(updatedData)
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+                action: "update_full_order", orderId: activeEditOrderId,
+                siteName: document.getElementById('viewSiteName').value, slogan: document.getElementById('viewSlogan').value,
+                template: document.getElementById('viewTemplate').value, bio: document.getElementById('viewBio').value,
+                contact: document.getElementById('viewContact').value, maps: document.getElementById('viewMaps').value,
+                socials: document.getElementById('viewSocials').value, domain: "" // دامنه از بخش خودش مدیریت میشه
+            })
         }).then(res => res.json()).then(data => {
-            btn.innerText = 'ذخیره تغییرات سفارش';
-            btn.disabled = false;
+            btn.innerText = 'ذخیره تغییرات سفارش'; btn.disabled = false;
             if(data.status === 'success') {
-                Swal.fire({title: 'موفق', text: 'اطلاعات با موفقیت ویرایش شد', icon: 'success', timer: 1500, showConfirmButton: false});
-                loadOrders(); // رفرش در پس زمینه
-            } else {
-                Swal.fire('خطا', data.message, 'error');
-            }
-        }).catch(err => {
-            btn.innerText = 'ذخیره تغییرات سفارش';
-            btn.disabled = false;
+                Swal.fire({title: 'موفق', text: 'ویرایش شد', icon: 'success', timer: 1500, showConfirmButton: false});
+                loadOrders(); // رفرش خودکار بعد از ویرایش
+            } else Swal.fire('خطا', data.message, 'error');
+        }).catch(err => { btn.innerText = 'ذخیره'; btn.disabled = false; });
+    }
+
+    // مودال دامنه
+    function openDomainModal(orderId) {
+        activeActionOrderId = orderId;
+        const order = allLoadedOrders.find(o => o.orderId === orderId);
+        document.getElementById('customDomainInput').value = order.domain || "";
+        document.getElementById('domainModal').classList.remove('hidden');
+    }
+
+    function saveDomainOnly() {
+        const domain = document.getElementById('customDomainInput').value.trim();
+        Swal.fire({ title: 'در حال ذخیره...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+        fetch(GAS_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "save_domain", orderId: activeActionOrderId, domain: domain })
+        }).then(res => res.json()).then(data => {
+            if(data.status === 'success') {
+                Swal.fire('موفق', data.message, 'success');
+                loadOrders(); // رفرش خودکار
+            } else Swal.fire('خطا', data.message, 'error');
         });
     }
 
-    // منطق جدید: آپلود تصویر (پس زمینه)
+    // مودال تصویر
+    function openImageModal(orderId) {
+        activeActionOrderId = orderId;
+        const order = allLoadedOrders.find(o => o.orderId === orderId);
+        renderImagesGallery(order.images);
+        document.getElementById('imageModal').classList.remove('hidden');
+    }
+
     function uploadOrderImage() {
         const fileInput = document.getElementById('imageInput');
+        const descInput = document.getElementById('imageDescription');
         const file = fileInput.files[0];
-        if(!file) return alert('لطفاً یک تصویر انتخاب کنید.');
+        const desc = descInput.value.trim();
         
-        // محدودیت 500 کیلوبایت
-        if(file.size > 512000) {
-            return Swal.fire('حجم تصویر زیاد است', 'حجم تصویر نباید بیشتر از 500 کیلوبایت باشد. لطفاً از TinyPNG برای کاهش حجم استفاده کنید.', 'error');
-        }
+        if(!file) return alert('تصویر انتخاب نشده است.');
+        if(!desc) return alert('نوشتن توضیح برای تصویر الزامی است.');
+        if(file.size > 512000) return Swal.fire('خطا', 'حجم تصویر باید زیر 500 کیلوبایت باشد.', 'error');
+
+        // محدودیت سمت کلاینت
+        const order = allLoadedOrders.find(o => o.orderId === activeActionOrderId);
+        if(order.images && order.images.length >= 10) return Swal.fire('خطا', 'حداکثر 10 تصویر مجاز است.', 'error');
 
         const btn = document.getElementById('uploadImgBtn');
-        const originalBtnHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آپلود...';
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ارسال...';
         btn.disabled = true;
 
         const reader = new FileReader();
         reader.onload = function(e) {
             const base64Data = e.target.result.split(',')[1];
-            
             fetch(GAS_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({
-                    action: "upload_image",
-                    orderId: activeEditOrderId,
-                    fileName: file.name,
-                    mimeType: file.type,
-                    base64: base64Data
+                    action: "upload_image", orderId: activeActionOrderId,
+                    fileName: file.name, mimeType: file.type, base64: base64Data, description: desc
                 })
             }).then(res => res.json()).then(data => {
-                btn.innerHTML = originalBtnHTML;
-                btn.disabled = false;
-                fileInput.value = ''; // پاک کردن اینپوت
+                btn.innerHTML = oldHtml; btn.disabled = false;
                 if(data.status === 'success') {
-                    // بروزرسانی گالری به صورت دستی تا نیازی به رفرش کل سفارشات نباشد
-                    const orderIndex = allLoadedOrders.findIndex(o => o.orderId === activeEditOrderId);
-                    if(orderIndex > -1) {
-                        allLoadedOrders[orderIndex].images = allLoadedOrders[orderIndex].images ? allLoadedOrders[orderIndex].images + "," + data.imageUrl : data.imageUrl;
-                        renderImagesGallery(allLoadedOrders[orderIndex].images);
-                    }
-                } else {
-                    Swal.fire('خطا', data.message, 'error');
-                }
-            }).catch(err => {
-                btn.innerHTML = originalBtnHTML;
-                btn.disabled = false;
-                Swal.fire('خطا', 'خطا در ارتباط با سرور هنگام آپلود.', 'error');
-            });
+                    fileInput.value = ''; descInput.value = '';
+                    Swal.fire({title: 'موفق', text: 'تصویر آپلود شد', icon: 'success', timer: 1500});
+                    loadOrders(); // رفرش برای دریافت لینک جدید تصویر
+                    setTimeout(() => openImageModal(activeActionOrderId), 1500); // باز کردن مجدد مودال
+                } else Swal.fire('خطا', data.message, 'error');
+            }).catch(err => { btn.innerHTML = oldHtml; btn.disabled = false; });
         };
         reader.readAsDataURL(file);
     }
 
-    // منطق جدید: نمایش گالری تصاویر آپلود شده
-    function renderImagesGallery(imagesString) {
+    function renderImagesGallery(imagesArray) {
         const gallery = document.getElementById('uploadedImagesGallery');
+        const badge = document.getElementById('imageCountBadge');
         gallery.innerHTML = '';
-        if(!imagesString) {
-            gallery.innerHTML = '<span class="text-xs text-gray-400 col-span-full">تصویری ارسال نشده است.</span>';
+        
+        if(!imagesArray || imagesArray.length === 0) {
+            badge.innerText = '0 / 10';
+            gallery.innerHTML = '<p class="col-span-full text-center text-gray-400 py-4">هنوز تصویری ارسال نشده است.</p>';
             return;
         }
-        const links = imagesString.split(',');
-        links.forEach((url, index) => {
-            if(url.trim() !== "") {
-                gallery.innerHTML += `
-                    <a href="${url}" target="_blank" class="block bg-gray-100 border rounded-lg p-2 text-center hover:bg-blue-100 transition">
-                        <i class="fas fa-image text-gray-400 text-2xl mb-1"></i>
-                        <span class="block text-xs text-blue-600 truncate">مشاهده تصویر ${index + 1}</span>
-                    </a>
-                `;
-            }
+
+        badge.innerText = `${imagesArray.length} / 10`;
+        imagesArray.forEach((img, index) => {
+            // نمایش تصویر به صورت <img> تگ با لینک مستقیم گوگل درایو
+            gallery.innerHTML += `
+                <div class="border rounded-lg p-2 bg-white shadow-sm flex flex-col">
+                    <div class="h-32 w-full mb-2 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                        <img src="${img.url}" alt="image" class="max-h-full max-w-full object-contain">
+                    </div>
+                    <p class="text-xs text-gray-700 font-bold bg-blue-50 p-1 rounded text-center truncate" title="${img.desc}">${index + 1}. ${img.desc}</p>
+                </div>
+            `;
         });
     }
 
-    function retryPayment(orderId) {
-        localStorage.setItem('pendingPaymentOrderId', orderId);
-        window.location.href = STRIPE_LINK;
-    }
+    function retryPayment(orderId) { localStorage.setItem('pendingPaymentOrderId', orderId); window.location.href = STRIPE_LINK; }
 
     function openTicketsModal(orderId) {
         activeTicketOrderId = orderId;
         document.getElementById('ticketOrderIdDisplay').innerText = orderId;
-        
         const chatBox = document.getElementById('ticketsChatBox');
         chatBox.innerHTML = '';
         
@@ -638,19 +681,14 @@
                 const isUser = ticket.sender.toLowerCase() === currentUser.toLowerCase();
                 const bubbleClass = isUser ? 'chat-user' : 'chat-admin';
                 const senderName = isUser ? 'شما' : 'پشتیبانی ToWeb';
-                
                 chatBox.innerHTML += `
                     <div class="chat-bubble ${bubbleClass}">
                         <div class="text-xs opacity-70 mb-1 font-bold">${senderName} <span class="font-normal mx-2">${ticket.date}</span></div>
                         <div>${ticket.message}</div>
-                    </div>
-                `;
+                    </div>`;
             });
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
-        } else {
-            chatBox.innerHTML = '<p class="text-center text-gray-400 mt-10">هیچ پیامی ثبت نشده است. اولین پیام خود را بفرستید.</p>';
-        }
-        
+        } else chatBox.innerHTML = '<p class="text-center text-gray-400 mt-10">هیچ پیامی ثبت نشده است.</p>';
         document.getElementById('ticketsModal').classList.remove('hidden');
     }
 
@@ -659,21 +697,14 @@
         const msg = msgInput.value.trim();
         if(!msg || !activeTicketOrderId) return;
         
-        msgInput.value = 'در حال ارسال...';
-        msgInput.disabled = true;
-
+        msgInput.value = 'در حال ارسال...'; msgInput.disabled = true;
         fetch(GAS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ action: "submit_ticket", orderId: activeTicketOrderId, email: currentUser, message: msg })
         }).then(res => res.json()).then(data => {
-            msgInput.value = '';
-            msgInput.disabled = false;
-            fetch(GAS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "get_orders", email: currentUser }) })
-            .then(res => res.json()).then(data => {
-                allLoadedOrders = data.orders.reverse();
-                openTicketsModal(activeTicketOrderId);
-            });
+            msgInput.value = ''; msgInput.disabled = false;
+            loadOrders(); // رفرش کل
+            setTimeout(() => openTicketsModal(activeTicketOrderId), 1000); 
         });
     }
 
@@ -683,9 +714,9 @@
             <div class="bg-gray-50 p-3 rounded border mb-2"><strong class="text-gray-700">ایمیل مدیر:</strong> <span dir="ltr">${order.siteEmail}</span></div>
             <div class="bg-gray-50 p-3 rounded border mb-2"><strong class="text-gray-700">رمز عبور:</strong> <span dir="ltr">${order.sitePass}</span></div>
             <h3 class="font-bold mt-4 mb-2">سورس کدها:</h3>
-            <textarea readonly class="w-full text-left p-2 border rounded bg-gray-800 text-green-400 text-sm h-24 mb-2" dir="ltr" placeholder="HTML Code">${order.html}</textarea>
-            <textarea readonly class="w-full text-left p-2 border rounded bg-gray-800 text-yellow-300 text-sm h-24 mb-2" dir="ltr" placeholder="CSS Code">${order.css}</textarea>
-            <textarea readonly class="w-full text-left p-2 border rounded bg-gray-800 text-blue-300 text-sm h-24" dir="ltr" placeholder="JS Code">${order.js}</textarea>
+            <textarea readonly class="w-full text-left p-2 border rounded bg-gray-800 text-green-400 text-sm h-24 mb-2" dir="ltr">${order.html}</textarea>
+            <textarea readonly class="w-full text-left p-2 border rounded bg-gray-800 text-yellow-300 text-sm h-24 mb-2" dir="ltr">${order.css}</textarea>
+            <textarea readonly class="w-full text-left p-2 border rounded bg-gray-800 text-blue-300 text-sm h-24" dir="ltr">${order.js}</textarea>
         `;
         document.getElementById('finalDataContent').innerHTML = content;
         document.getElementById('finalDataModal').classList.remove('hidden');
