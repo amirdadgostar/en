@@ -161,15 +161,40 @@
 
         <div id="cardToCardSection" class="hidden mt-6 pt-4 border-t border-dashed">
             <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-sm text-yellow-800 mb-4 text-center leading-relaxed">
-                لطفاً مبلغ فوق را دقیقاً به شماره کارت زیر واریز نموده و تصویر رسید (حداکثر 200 کیلوبایت) را آپلود کنید.
-                <div class="text-xl font-bold mt-2 tracking-widest text-gray-900 bg-white p-2 border rounded" dir="ltr">6037-9911-0513-7743</div>
-                <div class="text-xs text-gray-500 mt-1">به نام مدیریت ToWeb</div>
+                لطفاً مبلغ فوق را دقیقاً به شماره کارت زیر واریز نموده و تصویر رسید (حداکثر 200 کیلوبایت) را آپلود کنید.<br>
+                <span class="text-xs text-gray-500">(جهت کپی روی شماره کارت کلیک کنید)</span>
+                <div onclick="copyCardNumber()" class="text-xl font-bold mt-2 tracking-widest text-gray-900 bg-white p-2 border rounded cursor-pointer hover:bg-blue-50 transition" dir="ltr" title="کلیک برای کپی">6037991105137743</div>
+                <div class="text-xs text-gray-500 mt-1 font-bold">به نام: امیرحسین دادگستر</div>
             </div>
             
             <input type="file" id="receiptInput" accept="image/*" class="w-full border p-2 rounded-lg text-sm bg-white mb-3">
             <button id="uploadReceiptBtn" onclick="uploadReceipt()" class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 font-bold transition flex justify-center items-center gap-2">
                 <i class="fas fa-upload"></i> ارسال رسید پرداخت
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- مودال جدید: تاریخچه پرداخت‌ها -->
+<div id="paymentsHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('paymentsHistoryModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-history text-blue-600"></i> تاریخچه و وضعیت پرداخت‌های این سفارش</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-right text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">نوع/مرحله</th>
+                        <th scope="col" class="px-6 py-3">مبلغ</th>
+                        <th scope="col" class="px-6 py-3">تاریخ و ساعت</th>
+                        <th scope="col" class="px-6 py-3">وضعیت تراکنش</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentsHistoryTableBody">
+                    <!-- داده‌ها اینجا لود می‌شوند -->
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -202,10 +227,10 @@
         <h2 class="text-2xl font-bold mb-4 text-blue-600 border-b pb-2">جزئیات سفارش <span id="viewOrderId" class="text-sm text-gray-500"></span></h2>
         
         <div id="editWarningMessage" class="hidden bg-yellow-50 text-yellow-800 p-3 rounded-lg mb-4 text-sm font-bold border border-yellow-200">
-            <i class="fas fa-info-circle"></i> چون پرداخت انجام نشده است، می‌توانید اطلاعات را ویرایش کنید.
+            <i class="fas fa-info-circle"></i> چون پرداخت انجام نشده است، می‌توانید اطلاعات را ویرایش و تکمیل کنید.
         </div>
         <div id="viewOnlyMessage" class="hidden bg-gray-50 text-gray-600 p-3 rounded-lg mb-4 text-sm border border-gray-200">
-            <i class="fas fa-lock"></i> این سفارش پرداخت شده است و اطلاعات آن قابل ویرایش نیست.
+            <i class="fas fa-lock"></i> این سفارش در مرحله انجام/تکمیل است و اطلاعات آن قابل ویرایش نیست.
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -216,6 +241,13 @@
             <div class="md:col-span-2"><label class="text-xs text-gray-500 block">اطلاعات تماس (ترکیبی)</label><input type="text" id="viewContact" class="w-full p-2 border rounded bg-gray-50 disabled:text-gray-600"></div>
             <div class="md:col-span-2"><label class="text-xs text-gray-500 block">لینک نقشه</label><input type="text" id="viewMaps" class="w-full p-2 border rounded bg-gray-50 disabled:text-gray-600" dir="ltr" style="text-align:left;"></div>
             <div class="md:col-span-2"><label class="text-xs text-gray-500 block">شبکه‌های اجتماعی</label><input type="text" id="viewSocials" class="w-full p-2 border rounded bg-gray-50 disabled:text-gray-600" dir="ltr" style="text-align:left;"></div>
+            <!-- اضافه شدن بخش سئو به صفحه ویرایش تا کاربر بتواند در صورت بسته شدن صفحه، اینجا جبران کند -->
+            <div class="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2" id="editSeoSection">
+                <label class="flex items-center cursor-pointer font-bold text-sm text-blue-800">
+                    <input type="checkbox" id="viewWantsSeoDomain" class="mr-2 ml-2 w-5 h-5 text-blue-600 rounded">
+                    مایل به انجام خدمات سئو و اخذ دامنه اختصاصی هستم (مبلغ 1 میلیون تومان به فاکتور نهایی اضافه می‌شود)
+                </label>
+            </div>
         </div>
 
         <button id="saveEditBtn" onclick="saveEditedOrder()" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 font-bold mb-2 hidden">ذخیره تغییرات سفارش</button>
@@ -313,6 +345,29 @@
     let activePayOrderId = null;
     let activePayStage = 1;
     let activePayAmount = 0;
+
+    function copyCardNumber() {
+        const cardNumber = "6037991105137743";
+        navigator.clipboard.writeText(cardNumber).then(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'شماره کارت کپی شد!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }).catch(err => {
+            // روش جایگزین در صورت مسدود بودن کلیپ بورد مرورگر
+            const tempInput = document.createElement("input");
+            tempInput.value = cardNumber;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'شماره کارت کپی شد!', showConfirmButton: false, timer: 1500 });
+        });
+    }
 
     function togglePasswordVisibility() {
         const passwordInput = document.getElementById('password');
@@ -464,6 +519,8 @@
             Swal.close(); currentOrderId = data.orderId;
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
+            // رفرش لیست برای نمایش سفارش ایجاد شده با مبلغ پایه حتی اگر کاربر صفحه را ببندد
+            loadOrders();
         }).catch(err => { Swal.close(); Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error'); });
     }
 
@@ -625,14 +682,15 @@
                 
                 let actionBtn = '';
                 
-                // استخراج مبلغ قسط از دیتابیس (اگر موجود بود در غیر اینصورت محاسبه مجدد)
-                let instAmount = order.installmentPrice ? parseInt(order.installmentPrice) : (order.seoDomainChoice === "بله" ? 1500000 : 1000000);
+                // استخراج مبلغ قسط و کل از دیتابیس (اطمینان از وجود مقدار پایه)
+                let instAmount = order.installmentPrice ? parseInt(order.installmentPrice) : 1000000;
+                let dispTotal = order.totalPrice ? parseInt(order.totalPrice).toLocaleString() : '2,000,000';
                 
                 if(isPendingReceipt) {
                     actionBtn = `<button disabled class="mt-4 w-full bg-gray-400 text-white p-2 rounded font-bold cursor-not-allowed">در انتظار تایید فیش بانکی توسط مدیر...</button>`;
                 } else if (!isAdvancePaid && order.paymentStatus !== 'قسط اول - در حال بررسی') {
                     // دکمه قسط اول (شروع)
-                    actionBtn = `<button onclick="openPaymentChoiceModal('${order.orderId}', 1, ${instAmount})" class="mt-4 w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 font-bold">پرداخت بیعانه شروع (${instAmount.toLocaleString()} تومان)</button>`;
+                    actionBtn = `<button onclick="openPaymentChoiceModal('${order.orderId}', 1, ${instAmount})" class="mt-4 w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 font-bold shadow-md">پرداخت بیعانه شروع (${instAmount.toLocaleString()} تومان)</button>`;
                 } else if (isReadyForFinal && !isFullyPaid) {
                     // دکمه قسط دوم (تسویه)
                     actionBtn = `<button onclick="openPaymentChoiceModal('${order.orderId}', 2, ${instAmount})" class="mt-4 w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 font-bold animate-bounce shadow-lg">پرداخت تسویه نهایی (${instAmount.toLocaleString()} تومان)</button>`;
@@ -658,11 +716,17 @@
                         <p class="text-sm text-gray-600 mb-1"><span class="font-bold">کد سفارش:</span> ${order.orderId}</p>
                         <p class="text-xs text-gray-500 mt-2">تاریخ ثبت: <span dir="ltr">${order.regDate}</span></p>
                         <p class="text-xs text-gray-500">تاریخ آخرین پرداخت: <span dir="ltr">${order.payDate}</span></p>
-                        <div class="mt-3 flex flex-wrap gap-2">
+                        <div class="mt-3 flex flex-wrap gap-2 items-center">
                             <span class="text-xs px-2 py-1 rounded ${statusColor}">${order.orderStatus}</span>
                             <span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-800">${order.paymentStatus}</span>
-                            <span class="text-xs px-2 py-1 rounded bg-purple-50 text-purple-800 font-bold">هزینه کل: ${(order.totalPrice ? parseInt(order.totalPrice).toLocaleString() : '---')} تومان</span>
+                            <span class="text-xs px-2 py-1 rounded bg-purple-50 text-purple-800 font-bold border border-purple-200">هزینه کل: ${dispTotal} تومان</span>
                         </div>
+                        
+                        <!-- دکمه مشاهده تاریخچه پرداخت ها و فیش ها -->
+                        <button onclick="openPaymentsHistory('${order.orderId}')" class="mt-3 w-full bg-gray-50 border border-gray-300 text-gray-600 p-2 rounded hover:bg-gray-100 text-sm font-bold transition">
+                            <i class="fas fa-history ml-1"></i> مشاهده پرداخت‌ها و بررسی وضعیت
+                        </button>
+                        
                         ${actionBtn}
                     </div>
                 `;
@@ -670,6 +734,38 @@
         }).catch(err => {
             document.getElementById('ordersList').innerHTML = '<p class="text-red-500">خطا در بارگیری اطلاعات.</p>';
         });
+    }
+
+    // متد جدید برای باز کردن مودال تاریخچه پرداخت‌ها
+    function openPaymentsHistory(orderId) {
+        const order = allLoadedOrders.find(o => o.orderId === orderId);
+        if(!order) return;
+        
+        const tbody = document.getElementById('paymentsHistoryTableBody');
+        tbody.innerHTML = '';
+
+        if(order.paymentsHistory && order.paymentsHistory.length > 0) {
+            order.paymentsHistory.forEach(pay => {
+                // رنگ آمیزی وضعیت
+                let statClass = 'text-gray-500';
+                if(pay.status.includes('تایید') || pay.status === 'success') statClass = 'text-green-600 font-bold';
+                else if(pay.status.includes('ناموفق') || pay.status === 'error') statClass = 'text-red-600 font-bold';
+                else if(pay.status.includes('در انتظار')) statClass = 'text-yellow-600 font-bold';
+
+                tbody.innerHTML += `
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">${pay.type}</td>
+                        <td class="px-6 py-4">${parseInt(pay.amount).toLocaleString()} تومان</td>
+                        <td class="px-6 py-4" dir="ltr">${pay.date}</td>
+                        <td class="px-6 py-4 ${statClass}">${pay.status}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">هنوز پرداختی برای این سفارش ثبت نشده است.</td></tr>`;
+        }
+        
+        document.getElementById('paymentsHistoryModal').classList.remove('hidden');
     }
 
     function openOrderDetailsModal(orderId) {
@@ -685,9 +781,12 @@
         document.getElementById('viewContact').value = order.contactInfo;
         document.getElementById('viewMaps').value = order.maps;
         document.getElementById('viewSocials').value = order.socials;
+        
+        // آپدیت تیک سئو در مدال ویرایش
+        document.getElementById('viewWantsSeoDomain').checked = (order.seoDomainChoice === "بله");
 
         const isAdvancePaid = order.paymentStatus.includes("قسط اول") || order.paymentStatus.includes("پیش پرداخت") || order.paymentStatus === "تسویه کامل انجام شد" || order.paymentStatus.includes("در انتظار تایید فیش");
-        const fields = ['viewSiteName', 'viewSlogan', 'viewTemplate', 'viewBio', 'viewContact', 'viewMaps', 'viewSocials'];
+        const fields = ['viewSiteName', 'viewSlogan', 'viewTemplate', 'viewBio', 'viewContact', 'viewMaps', 'viewSocials', 'viewWantsSeoDomain'];
         fields.forEach(f => document.getElementById(f).disabled = isAdvancePaid);
 
         if(!isAdvancePaid) {
@@ -705,6 +804,8 @@
     function saveEditedOrder() {
         const btn = document.getElementById('saveEditBtn');
         btn.innerText = 'در حال ذخیره...'; btn.disabled = true;
+        
+        const wantsSeoDomain = document.getElementById('viewWantsSeoDomain').checked ? "بله" : "خیر";
 
         fetch(GAS_URL, {
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -713,15 +814,17 @@
                 siteName: document.getElementById('viewSiteName').value, slogan: document.getElementById('viewSlogan').value,
                 template: document.getElementById('viewTemplate').value, bio: document.getElementById('viewBio').value,
                 contact: document.getElementById('viewContact').value, maps: document.getElementById('viewMaps').value,
-                socials: document.getElementById('viewSocials').value
+                socials: document.getElementById('viewSocials').value,
+                wantsSeoDomain: wantsSeoDomain
             })
         }).then(res => res.json()).then(data => {
             btn.innerText = 'ذخیره تغییرات سفارش'; btn.disabled = false;
             if(data.status === 'success') {
                 Swal.fire({title: 'موفق', text: 'ویرایش شد', icon: 'success', timer: 1500, showConfirmButton: false});
+                closeModal('orderDetailsModal');
                 loadOrders(); 
             } else Swal.fire('خطا', data.message, 'error');
-        }).catch(err => { btn.innerText = 'ذخیره'; btn.disabled = false; });
+        }).catch(err => { btn.innerText = 'ذخیره تغییرات سفارش'; btn.disabled = false; });
     }
 
     // متدهای مربوط به مدیریت دامنه
