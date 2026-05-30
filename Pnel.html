@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -229,7 +227,8 @@
 
         <div id="cardToCardSection" class="hidden mt-6 pt-4 border-t border-dashed">
             <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-sm text-yellow-800 mb-4 text-center leading-relaxed">
-                لطفاً مبلغ فوق را دقیقاً به شماره کارت زیر واریز نموده و تصویر رسید (حداکثر 200 کیلوبایت) را آپلود کنید.<br>
+                لطفاً مبلغ فوق را دقیقاً به شماره کارت زیر واریز نموده و تصویر رسید را آپلود کنید.<br>
+                (تصویر رسید به صورت خودکار فشرده می‌شود.)<br>
                 <span class="text-xs text-gray-500">(جهت کپی روی شماره کارت کلیک کنید)</span>
                 <div onclick="copyCardNumber()" class="text-xl font-bold mt-2 tracking-widest text-gray-900 bg-white p-2 border rounded cursor-pointer hover:bg-blue-50 transition shadow-sm" dir="ltr" title="کلیک برای کپی">6037991105137743</div>
                 <div class="text-xs text-gray-500 mt-1 font-bold">به نام: امیرحسین دادگستر</div>
@@ -403,8 +402,7 @@
             <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> راهنمای ارسال تصویر:</p>
             <ul class="list-disc list-inside mb-2">
                 <li>این تصاویر جایگزین تصاویر در قالب پیش‌فرض سایت شما می‌شوند.</li>
-                <li>حداکثر <strong>10 تصویر</strong> مجاز است. حجم هر تصویر باید زیر <strong>400 کیلوبایت</strong> باشد.</li>
-                <li>برای کاهش حجم بدون افت کیفیت از سایت <a href="https://tinypng.com/" target="_blank" class="font-bold underline text-blue-900">TinyPNG.com</a> استفاده کنید.</li>
+                <li>حداکثر <strong>10 تصویر</strong> مجاز است. حجم تصاویر به صورت خودکار فشرده و بهینه‌سازی (زیر 200 کیلوبایت) می‌شود.</li>
                 <li>نوشتن توضیح برای هر تصویر الزامی است (مثال: تصویر لوگو).</li>
             </ul>
         </div>
@@ -441,6 +439,112 @@
     let activePayOrderId = null;
     let activePayStage = 1;
     let activePayAmount = 0;
+
+    // --- توابع فشرده سازی هوشمند تصاویر (بر اساس الگوریتم درخواستی) ---
+    function loadImageFromFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = reader.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function canvasToBlob(canvas, type, quality) {
+        return new Promise(resolve => canvas.toBlob(resolve, type, quality));
+    }
+
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    function hasTransparency(img) {
+        const sampleSize = 50; 
+        const canvas = document.createElement('canvas');
+        canvas.width = sampleSize;
+        canvas.height = sampleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+        const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize);
+        const data = imageData.data;
+        for (let i = 3; i < data.length; i += 4) {
+            if (data[i] < 255) return true;
+        }
+        return false;
+    }
+
+    async function compressBaseImage(img, maxKB, usePNG = false) {
+        const origW = img.naturalWidth;
+        const origH = img.naturalHeight;
+        const maxBytes = maxKB * 1024;
+        const MIN_DIM = 10;   
+        const MAX_DIM = 1600; 
+
+        let w = origW;
+        let h = origH;
+
+        if (Math.max(origW, origH) > MAX_DIM) {
+            const scale = MAX_DIM / Math.max(origW, origH);
+            w = Math.round(origW * scale);
+            h = Math.round(origH * scale);
+        }
+
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const mimeType = usePNG ? 'image/png' : 'image/jpeg';
+        let quality = usePNG ? undefined : 0.85; 
+        let blob = await canvasToBlob(canvas, mimeType, quality);
+
+        if (!usePNG) {
+            while (blob.size > maxBytes && quality > 0.05) {
+                quality -= 0.1;
+                blob = await canvasToBlob(canvas, mimeType, quality);
+            }
+        }
+
+        let resizeAttempts = 0;
+        while (blob.size > maxBytes && (w > MIN_DIM || h > MIN_DIM) && resizeAttempts < 20) {
+            const scaleFactor = 0.8; 
+            w = Math.max(MIN_DIM, Math.round(w * scaleFactor));
+            h = Math.max(MIN_DIM, Math.round(h * scaleFactor));
+            canvas = document.createElement('canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = w;
+            canvas.height = h;
+            ctx.drawImage(img, 0, 0, w, h);
+            blob = await canvasToBlob(canvas, mimeType, quality);
+            resizeAttempts++;
+        }
+
+        if (!usePNG && blob.size > maxBytes) {
+            quality = 0.01;
+            blob = await canvasToBlob(canvas, mimeType, quality);
+        }
+
+        const base64 = await blobToBase64(blob);
+        return { base64, mimeType };
+    }
+
+    async function smartCompressImage(file, maxKB = 190) {
+        const img = await loadImageFromFile(file);
+        const isTransparent = hasTransparency(img);
+        return await compressBaseImage(img, maxKB, isTransparent);
+    }
+    // -----------------------------------------------------------------
 
     // تابع امنیتی جدید برای جلوگیری از خرابی شیت و اکسل (دستور چهارم)
     function sanitizeExcel(str) {
@@ -778,21 +882,24 @@
         });
     }
 
-    function uploadReceipt() {
+    async function uploadReceipt() {
         const fileInput = document.getElementById('receiptInput');
         const file = fileInput.files[0];
         
         if(!file) return Swal.fire('خطا', 'لطفاً تصویر رسید واریزی را انتخاب کنید.', 'error');
-        if(file.size > 204800) return Swal.fire('حجم غیرمجاز', 'حجم تصویر رسید باید زیر 200 کیلوبایت باشد. لطفاً عکس را فشرده کنید.', 'error');
 
         const btn = document.getElementById('uploadReceiptBtn');
         const oldHtml = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آپلود و ثبت...';
         btn.disabled = true;
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const base64Data = e.target.result;
+        Swal.fire({ title: 'فشرده‌سازی خودکار', text: 'حجم تصویر رسید در حال کاهش است...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+
+        try {
+            const compressed = await smartCompressImage(file, 190);
+            const base64Data = compressed.base64;
+            const mimeType = compressed.mimeType;
+
             fetch(GAS_URL, {
                 method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({
@@ -801,7 +908,7 @@
                     stage: activePayStage,
                     amount: activePayAmount,
                     base64: base64Data,
-                    mimeType: file.type,
+                    mimeType: mimeType,
                     fileName: `Receipt_${activePayOrderId}_Stage${activePayStage}`
                 })
             }).then(res => res.json()).then(data => {
@@ -811,9 +918,11 @@
                     Swal.fire('ثبت موفق', 'رسید شما با موفقیت آپلود شد و پس از بررسی توسط مدیریت، وضعیت پرداخت آپدیت می‌شود.', 'success');
                     loadOrders();
                 } else Swal.fire('خطا', data.message, 'error');
-            }).catch(err => { btn.innerHTML = oldHtml; btn.disabled = false; });
-        };
-        reader.readAsDataURL(file);
+            }).catch(err => { btn.innerHTML = oldHtml; btn.disabled = false; Swal.fire('خطا', 'مشکل ارتباط با سرور', 'error'); });
+        } catch (error) {
+            btn.innerHTML = oldHtml; btn.disabled = false;
+            Swal.fire('خطا', 'خطا در فشرده سازی تصویر', 'error');
+        }
     }
 
     // متد حذف کامل سفارش و فایل‌های روی سرور
@@ -904,8 +1013,10 @@
                             ${canDelete ? `
                                 <span class="cursor-pointer text-red-400 hover:text-red-600 transition" onclick="deleteOrder('${order.orderId}')" title="حذف کامل سفارش"><i class="fas fa-trash-alt"></i></span>
                             ` : ''}
-                            ${isAdvancePaid ? `
+                            ${isAdvancePaid && order.seoDomainChoice === "بله" ? `
                                 <span class="cursor-pointer text-gray-500 hover:text-purple-600 transition" onclick="openDomainModal('${order.orderId}')" title="اتصال دامنه"><i class="fas fa-globe"></i></span>
+                            ` : ''}
+                            ${isAdvancePaid ? `
                                 <span class="cursor-pointer text-gray-500 hover:text-blue-600 transition" onclick="openImageModal('${order.orderId}')" title="ارسال تصاویر"><i class="fas fa-images"></i></span>
                             ` : ''}
                             <span class="cursor-pointer text-gray-500 hover:text-orange-500 transition" onclick="openOrderDetailsModal('${order.orderId}')" title="ویرایش/مشاهده اطلاعات"><i class="fas fa-edit"></i></span>
@@ -996,6 +1107,15 @@
         const lockedStatuses = ["در حال طراحی", "در حال انجام", "آماده تحویل", "تکمیل شده"];
         const isLockedByAdmin = lockedStatuses.includes(order.orderStatus.trim());
         
+        let isAdvancePaid = order.paymentStatus.includes("قسط اول") || order.paymentStatus.includes("پیش پرداخت") || order.paymentStatus === "تسویه کامل انجام شد" || order.paymentStatus.includes("در انتظار تایید فیش");
+        
+        // اگر قسط پرداخت شده است، بخش سئو مخفی شود (دستور اول)
+        if (isAdvancePaid) {
+            document.getElementById('editSeoSection').classList.add('hidden');
+        } else {
+            document.getElementById('editSeoSection').classList.remove('hidden');
+        }
+
         const fields = [
             'viewSiteName', 'viewSlogan', 'viewTemplate', 'viewBio', 'viewDesignNotes', 'viewWantsSeoDomain',
             'view_inp_Phone', 'view_inp_Email', 'view_inp_Address', 'view_inp_GoogleMap', 
@@ -1056,8 +1176,14 @@
     }
 
     function openDomainModal(orderId) {
-        activeActionOrderId = orderId;
         const order = allLoadedOrders.find(o => o.orderId === orderId);
+        
+        // اطمینان از اینکه کاربر پکیج سئو را انتخاب کرده است (دستور دوم)
+        if (order.seoDomainChoice !== "بله") {
+            return Swal.fire('خطا', 'شما خدمات سئو و دامنه را انتخاب نکرده‌اید.', 'error');
+        }
+
+        activeActionOrderId = orderId;
         
         if (order.domainStatus === "نیاز به ثبت دامنه") {
             document.querySelector('input[name="domainRadio"][value="needs_domain"]').checked = true;
@@ -1133,7 +1259,7 @@
         document.getElementById('imageModal').classList.remove('hidden');
     }
 
-    function uploadOrderImage() {
+    async function uploadOrderImage() {
         const fileInput = document.getElementById('imageInput');
         const descInput = document.getElementById('imageDescription');
         const file = fileInput.files[0];
@@ -1141,7 +1267,6 @@
         
         if(!file) return alert('تصویر انتخاب نشده است.');
         if(!desc) return alert('نوشتن توضیح برای تصویر الزامی است.');
-        if(file.size > 409600) return Swal.fire('خطا', 'حجم تصویر باید زیر 400 کیلوبایت باشد. از TinyPNG استفاده کنید.', 'error');
 
         const order = allLoadedOrders.find(o => o.orderId === activeActionOrderId);
         if(order.images && order.images.length >= 10) return Swal.fire('خطا', 'حداکثر 10 تصویر مجاز است.', 'error');
@@ -1151,28 +1276,33 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ارسال...';
         btn.disabled = true;
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const fullBase64Data = e.target.result; 
+        Swal.fire({ title: 'فشرده‌سازی خودکار', text: 'تصویر در حال بهینه‌سازی و آپلود است...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+
+        try {
+            const compressed = await smartCompressImage(file, 190);
+            const fullBase64Data = compressed.base64;
+            const mimeType = compressed.mimeType;
             const base64Content = fullBase64Data.split(',')[1];
             
             fetch(GAS_URL, {
                 method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({
                     action: "upload_image", orderId: activeActionOrderId,
-                    base64Full: base64Content, mimeType: file.type, fileName: file.name, description: desc
+                    base64Full: base64Content, mimeType: mimeType, fileName: file.name, description: desc
                 })
             }).then(res => res.json()).then(data => {
                 btn.innerHTML = oldHtml; btn.disabled = false;
                 if(data.status === 'success') {
                     fileInput.value = ''; descInput.value = '';
-                    Swal.fire({title: 'موفق', text: 'تصویر آپلود شد', icon: 'success', timer: 1500});
+                    Swal.fire({title: 'موفق', text: 'تصویر با موفقیت فشرده و آپلود شد', icon: 'success', timer: 1500});
                     loadOrders(); 
                     setTimeout(() => openImageModal(activeActionOrderId), 1500); 
                 } else Swal.fire('خطا', data.message, 'error');
-            }).catch(err => { btn.innerHTML = oldHtml; btn.disabled = false; });
-        };
-        reader.readAsDataURL(file);
+            }).catch(err => { btn.innerHTML = oldHtml; btn.disabled = false; Swal.fire('خطا', 'مشکل ارتباط با سرور', 'error'); });
+        } catch (error) {
+            btn.innerHTML = oldHtml; btn.disabled = false;
+            Swal.fire('خطا', 'خطا در فشرده سازی تصویر', 'error');
+        }
     }
 
     function renderImagesGallery(imagesArray) {
@@ -1218,7 +1348,7 @@
                     </div>`;
             });
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
-        } else chatBox.innerHTML = '<p class="text-center text-gray-400 mt-10 font-bold">پیامی در این تیکت وجود ندارد.</p>';
+        } else chatBox.innerHTML = '<p class="text-center text-gray-400 mt-10 font-bold empty-ticket-text">پیامی در این تیکت وجود ندارد.</p>';
         document.getElementById('ticketsModal').classList.remove('hidden');
     }
 
@@ -1231,6 +1361,13 @@
         if(!msg || !activeTicketOrderId) return;
         
         const chatBox = document.getElementById('ticketsChatBox');
+        
+        // حذف پیام "پیامی در این تیکت وجود ندارد" (دستور سوم)
+        const emptyText = chatBox.querySelector('.empty-ticket-text');
+        if (emptyText) {
+            emptyText.remove();
+        }
+
         const tempId = 'msg_temp_' + Date.now();
         const currentDate = new Date().toLocaleDateString('fa-IR');
         
