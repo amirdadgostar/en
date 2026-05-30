@@ -3,323 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدیریت کل - ToWeb</title>
+    <title>ToWeb Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap');
-        body { font-family: 'Vazirmatn', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Vazirmatn', sans-serif; background-color: #f1f5f9; }
         .hidden { display: none !important; }
-        
-        .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; font-size: 0.9rem; transition: all 0.3s ease; }
-        .chat-admin { background-color: #dcfce7; color: #166534; border-bottom-right-radius: 0; margin-left: auto; border: 1px solid #bbf7d0; }
+        .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; font-size: 0.9rem; }
+        .chat-admin { background-color: #eff6ff; color: #1e3a8a; border-bottom-right-radius: 0; margin-left: auto; border: 1px solid #bfdbfe; }
         .chat-user { background-color: #f3f4f6; color: #374151; border-bottom-left-radius: 0; margin-right: auto; border: 1px solid #e5e7eb; }
-
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        pre { white-space: pre-wrap; font-family: inherit; }
     </style>
 </head>
 <body class="text-gray-800">
 
 <script>
-    // آدرس اسکریپت را دقیقا همان آدرس قبلی بگذارید (اسکریپت آپدیت شده یکپارچه است)
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyDDYBTcjoLllmcHqOHoN4ZPP8tiGjvLOy2B1JHI61UXitJif_J2ks_s4InY_LiGJWE/exec"; 
 </script>
 
-<!-- بخش لاگین ادمین -->
-<div id="authSection" class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="bg-white p-8 rounded-2xl shadow-2xl w-96 relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
-        <h2 class="text-2xl font-bold text-center mb-2 text-gray-800"><i class="fas fa-user-shield text-red-600 ml-2"></i>ورود مدیریت</h2>
-        <p class="text-center text-xs text-gray-500 mb-6">سیستم جامع مدیریت سفارشات ToWeb</p>
-        <input type="email" id="email" placeholder="ایمیل مدیریت" class="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 bg-gray-50">
-        <input type="password" id="password" placeholder="رمز عبور" class="w-full mb-6 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 bg-gray-50">
-        <button onclick="handleAdminLogin()" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition font-bold shadow-lg">ورود به پنل</button>
+<!-- بخش لاگین مدیریت -->
+<div id="adminAuthSection" class="min-h-screen flex items-center justify-center bg-gray-900">
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-96 border-t-8 border-indigo-600">
+        <h2 class="text-2xl font-bold text-center mb-6 text-indigo-900"><i class="fas fa-user-shield text-indigo-600"></i> مدیریت ToWeb</h2>
+        <input type="text" id="adminUser" placeholder="نام کاربری مدیریت" class="w-full mb-4 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none" dir="ltr">
+        <input type="password" id="adminPass" placeholder="رمز عبور" class="w-full mb-6 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none" dir="ltr">
+        <button onclick="handleAdminLogin()" class="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 font-bold transition shadow-lg">ورود به پنل</button>
     </div>
 </div>
 
-<!-- پنل مدیریت -->
-<div id="dashboardSection" class="hidden min-h-screen flex flex-col">
-    <!-- Navbar -->
-    <nav class="bg-gray-900 text-white shadow-md p-4 flex justify-between items-center sticky top-0 z-40">
+<!-- پنل اصلی مدیریت -->
+<div id="adminDashboard" class="hidden min-h-screen flex flex-col">
+    <nav class="bg-indigo-900 text-white shadow-md p-4 flex justify-between items-center sticky top-0 z-40">
         <div class="font-bold text-xl flex items-center gap-3">
-            <span class="text-red-500"><i class="fas fa-cogs"></i> ToWeb Admin</span>
-            <button onclick="loadAdminData()" class="text-gray-400 hover:text-white transition bg-gray-800 p-2 rounded-lg text-sm" title="بروزرسانی اطلاعات"><i class="fas fa-sync-alt ml-1"></i> رفرش</button>
+            <i class="fas fa-shield-alt text-indigo-400"></i> ToWeb Admin
+            <button onclick="loadAllData()" class="text-indigo-300 hover:text-white transition ml-4" title="رفرش دیتا"><i class="fas fa-sync-alt"></i></button>
         </div>
-        <div class="flex items-center gap-4">
-            <span id="adminEmailDisplay" class="text-sm text-gray-300 hidden md:inline"></span>
-            <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-bold transition shadow"><i class="fas fa-sign-out-alt ml-1"></i> خروج</button>
+        <div class="flex gap-4 items-center text-sm">
+            <button onclick="openCreateUserModal()" class="bg-indigo-700 hover:bg-indigo-600 px-4 py-2 rounded-lg transition font-bold"><i class="fas fa-user-plus ml-1"></i> ثبت نام کاربر جدید</button>
+            <button onclick="logoutAdmin()" class="text-red-400 hover:text-red-300 font-bold"><i class="fas fa-sign-out-alt ml-1"></i> خروج</button>
         </div>
     </nav>
 
-    <!-- Content -->
-    <div class="container mx-auto p-6 max-w-7xl flex-1">
-        <!-- Tabs -->
-        <div class="flex gap-2 mb-6 border-b pb-2 overflow-x-auto">
-            <button onclick="switchTab('ordersTab')" id="btn_ordersTab" class="px-6 py-3 bg-red-50 text-red-700 font-bold rounded-t-lg border-b-2 border-red-600 transition whitespace-nowrap"><i class="fas fa-box-open ml-2"></i> مدیریت سفارشات</button>
-            <button onclick="switchTab('usersTab')" id="btn_usersTab" class="px-6 py-3 bg-white text-gray-600 font-bold rounded-t-lg hover:bg-gray-50 transition whitespace-nowrap"><i class="fas fa-users ml-2"></i> ساخت و مدیریت کاربران</button>
-        </div>
+    <div class="p-6 flex-1 container mx-auto max-w-7xl">
+        <h1 class="text-2xl font-bold mb-6 text-indigo-900"><i class="fas fa-tasks ml-2"></i> مدیریت کل سفارشات</h1>
+        <div class="mb-6"><input type="text" id="searchInput" onkeyup="filterOrders()" placeholder="جستجوی کد سفارش، ایمیل یا نام سایت..." class="w-full p-4 rounded-xl shadow-sm border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-300"></div>
+        <div id="ordersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+</div>
 
-        <!-- تب سفارشات -->
-        <div id="ordersTab" class="tab-content">
-            <div class="bg-white p-4 rounded-xl shadow-sm border mb-6 flex flex-wrap gap-4 items-center justify-between">
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <i class="fas fa-search text-gray-400"></i>
-                    <input type="text" id="searchOrders" onkeyup="filterOrders()" placeholder="جستجو کد، نام سایت یا کاربر..." class="p-2 border rounded-lg w-full md:w-80 bg-gray-50 focus:outline-none focus:border-red-400">
-                </div>
-                <div class="text-sm font-bold text-gray-600 bg-gray-100 px-4 py-2 rounded-lg">
-                    تعداد کل سفارشات: <span id="totalOrdersCount" class="text-red-600 text-lg">0</span>
-                </div>
-            </div>
-            
-            <!-- لیست سفارشات -->
-            <div id="adminOrdersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Data loaded here -->
+<!-- مودال ثبت نام کاربر -->
+<div id="createUserModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl w-full max-w-sm relative shadow-2xl border-t-4 border-indigo-600">
+        <button onclick="closeModal('createUserModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-lg font-bold mb-4 text-indigo-900"><i class="fas fa-user-plus"></i> ایجاد حساب کاربری جدید</h2>
+        <input type="email" id="newUserEmail" placeholder="ایمیل کاربر" class="w-full mb-3 p-3 border rounded-lg" dir="ltr">
+        <input type="text" id="newUserPass" placeholder="رمز عبور" class="w-full mb-4 p-3 border rounded-lg" dir="ltr">
+        <button onclick="adminCreateUser()" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700">ثبت کاربر</button>
+    </div>
+</div>
+
+<!-- مودال کپی متن منظم دیتا (قابلیت اصلی درخواستی) -->
+<div id="projectDataModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-full">
+        <div class="p-4 border-b flex justify-between items-center bg-indigo-50 rounded-t-xl">
+            <h2 class="font-bold text-indigo-900 text-lg"><i class="fas fa-file-alt ml-2"></i> اطلاعات جامع پروژه</h2>
+            <div class="flex gap-2">
+                <button onclick="copyFormattedData()" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 font-bold text-sm"><i class="fas fa-copy ml-1"></i> کپی متن</button>
+                <button onclick="closeModal('projectDataModal')" class="text-red-500 p-2 hover:bg-red-50 rounded"><i class="fas fa-times text-xl"></i></button>
             </div>
         </div>
-
-        <!-- تب کاربران -->
-        <div id="usersTab" class="tab-content hidden">
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 max-w-md mx-auto mb-8">
-                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-user-plus text-green-600 ml-2"></i>ثبت‌نام مشتری جدید</h2>
-                <div class="bg-blue-50 text-blue-800 p-3 rounded-lg text-xs mb-4">
-                    از این بخش می‌توانید برای مشتریان خود حساب کاربری ایجاد کنید و اطلاعات (ایمیل و رمز) را به آن‌ها بدهید تا وارد پنل خودشان شوند.
-                </div>
-                <input type="email" id="newUserEmail" placeholder="ایمیل کاربر (نام کاربری)" class="w-full mb-3 p-3 border rounded-lg bg-gray-50">
-                <input type="text" id="newUserPass" placeholder="رمز عبور" class="w-full mb-4 p-3 border rounded-lg bg-gray-50">
-                <button onclick="adminRegisterUser()" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 font-bold transition shadow"><i class="fas fa-check ml-2"></i> ایجاد حساب کاربر</button>
-            </div>
+        <div class="p-6 overflow-y-auto bg-gray-50 flex-1">
+            <pre id="formattedDataText" class="text-sm text-gray-800 leading-relaxed bg-white p-6 rounded border shadow-inner whitespace-pre-wrap font-mono" dir="rtl"></pre>
         </div>
     </div>
 </div>
 
-<!-- Modal: کپی اطلاعات سفارش -->
-<div id="copyDataModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col relative overflow-hidden">
-        <div class="bg-gray-100 p-4 border-b flex justify-between items-center">
-            <h2 class="text-lg font-bold text-gray-800"><i class="fas fa-clipboard-list text-blue-600 ml-2"></i> اطلاعات جامع سفارش جهت کپی</h2>
-            <button onclick="closeModal('copyDataModal')" class="text-gray-500 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
-        </div>
-        <div class="p-4 flex-1 overflow-y-auto bg-gray-50">
-            <textarea id="copyDataTextarea" class="w-full h-96 p-4 border rounded-xl bg-white text-sm font-mono leading-relaxed focus:outline-none custom-scrollbar" readonly dir="rtl"></textarea>
-        </div>
-        <div class="p-4 border-t bg-white flex justify-end gap-3">
-            <button onclick="closeModal('copyDataModal')" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition">بستن</button>
-            <button onclick="copyToClipboardTextarea()" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow"><i class="fas fa-copy ml-2"></i> کپی تمام متن</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: ویرایش وضعیت و تحویل -->
-<div id="editOrderModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
-        <button onclick="closeModal('editOrderModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500 z-10"><i class="fas fa-times text-xl"></i></button>
-        <div class="bg-gray-900 text-white p-6 rounded-t-2xl">
-            <h2 class="text-xl font-bold"><i class="fas fa-sliders-h ml-2"></i> مدیریت و تحویل سفارش: <span id="adminEditOrderId" class="text-red-400"></span></h2>
-        </div>
+<!-- مودال ویرایش وضعیت و تحویل نهایی -->
+<div id="statusModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto relative border-t-4 border-yellow-500">
+        <button onclick="closeModal('statusModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-edit text-yellow-500"></i> تغییر وضعیت و اطلاعات تحویل (<span id="editOrderId" class="text-sm text-gray-500"></span>)</h2>
         
-        <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label class="text-xs font-bold text-gray-500 block mb-1">وضعیت اجرای پروژه</label>
-                    <select id="adminOrderStatus" class="w-full p-3 border rounded-lg bg-gray-50 focus:border-red-500 focus:outline-none">
-                        <option value="ثبت اولیه">ثبت اولیه</option>
-                        <option value="در انتظار شروع انجام">در انتظار شروع انجام</option>
-                        <option value="در حال طراحی">در حال طراحی</option>
-                        <option value="آماده تحویل">آماده تحویل</option>
-                        <option value="تکمیل شده">تکمیل شده</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-500 block mb-1">وضعیت مالی و پرداخت</label>
-                    <select id="adminPaymentStatus" class="w-full p-3 border rounded-lg bg-gray-50 focus:border-red-500 focus:outline-none">
-                        <option value="پرداخت نشده">پرداخت نشده</option>
-                        <option value="پیش پرداخت انجام شد">پیش پرداخت انجام شد</option>
-                        <option value="قسط 1 - در انتظار تایید فیش">قسط 1 - در انتظار تایید فیش</option>
-                        <option value="قسط 2 - در انتظار تایید فیش">قسط 2 - در انتظار تایید فیش</option>
-                        <option value="تسویه کامل انجام شد">تسویه کامل انجام شد</option>
-                        <option value="ناموفق">ناموفق</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="text-xs font-bold text-gray-500 block mb-1">وضعیت دامنه (درج دستی)</label>
-                    <input type="text" id="adminDomainStatus" class="w-full p-3 border rounded-lg bg-gray-50 focus:border-red-500 focus:outline-none" dir="ltr">
-                </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="text-xs text-gray-600 font-bold">وضعیت سفارش</label>
+                <select id="inpOrderStatus" class="w-full p-2 border rounded mt-1 bg-gray-50">
+                    <option value="ثبت اولیه">ثبت اولیه</option>
+                    <option value="در انتظار شروع انجام">در انتظار شروع انجام</option>
+                    <option value="در حال طراحی">در حال طراحی</option>
+                    <option value="آماده تحویل">آماده تحویل</option>
+                    <option value="تکمیل شده">تکمیل شده</option>
+                </select>
             </div>
-
-            <div class="border-t pt-4 mb-4">
-                <h3 class="font-bold text-green-600 mb-3"><i class="fas fa-box-open ml-2"></i> اطلاعات تحویل نهایی (دریافت فایل‌ها)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-gray-500 block mb-1">آدرس سایت (URL)</label>
-                        <input type="text" id="adminSiteUrl" placeholder="https://..." class="w-full p-2 border rounded-lg bg-gray-50" dir="ltr">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 block mb-1">لینک سورس گیت‌هاب</label>
-                        <input type="text" id="adminGithubLink" placeholder="https://github.com/..." class="w-full p-2 border rounded-lg bg-gray-50" dir="ltr">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 block mb-1">ایمیل ورود ادمین</label>
-                        <input type="text" id="adminSiteEmail" class="w-full p-2 border rounded-lg bg-gray-50" dir="ltr">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 block mb-1">رمز عبور سایت</label>
-                        <input type="text" id="adminSitePass" class="w-full p-2 border rounded-lg bg-gray-50" dir="ltr">
-                    </div>
-                </div>
+            <div>
+                <label class="text-xs text-gray-600 font-bold">وضعیت پرداخت</label>
+                <select id="inpPaymentStatus" class="w-full p-2 border rounded mt-1 bg-gray-50">
+                    <option value="پرداخت نشده">پرداخت نشده</option>
+                    <option value="قسط 1 - در انتظار تایید فیش">قسط 1 - در انتظار تایید فیش</option>
+                    <option value="پیش پرداخت انجام شد">پیش پرداخت انجام شد</option>
+                    <option value="قسط 2 - در انتظار تایید فیش">قسط 2 - در انتظار تایید فیش</option>
+                    <option value="تسویه کامل انجام شد">تسویه کامل انجام شد</option>
+                </select>
             </div>
-
-            <button onclick="adminSaveOrderUpdates()" class="w-full bg-red-600 text-white p-4 rounded-xl font-bold hover:bg-red-700 transition shadow-lg mt-4"><i class="fas fa-save ml-2"></i> ثبت تغییرات سفارش</button>
         </div>
+
+        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4">
+            <h3 class="font-bold text-sm text-blue-900 border-b border-blue-200 pb-2 mb-3"><i class="fas fa-box-open"></i> اطلاعات تحویل نهایی</h3>
+            <div class="space-y-3">
+                <input type="text" id="inpSiteUrl" placeholder="آدرس سایت (URL)" class="w-full p-2 border rounded text-sm" dir="ltr">
+                <input type="text" id="inpSiteEmail" placeholder="ایمیل ادمین سایت" class="w-full p-2 border rounded text-sm" dir="ltr">
+                <input type="text" id="inpSitePass" placeholder="رمز عبور پنل سایت" class="w-full p-2 border rounded text-sm" dir="ltr">
+                <input type="text" id="inpGithub" placeholder="لینک فایل‌ها در Github / Drive" class="w-full p-2 border rounded text-sm" dir="ltr">
+            </div>
+        </div>
+
+        <button onclick="saveAdminOrderUpdates()" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 shadow"><i class="fas fa-save ml-2"></i> ذخیره تغییرات</button>
     </div>
 </div>
 
-<!-- Modal: پشتیبانی / چت -->
+<!-- مودال چت و تیکت ادمین -->
 <div id="adminTicketsModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col relative overflow-hidden">
-        <div class="bg-blue-600 text-white p-4 flex justify-between items-center">
-            <h2 class="text-lg font-bold"><i class="fas fa-headset ml-2"></i> پشتیبانی سفارش: <span id="adminTicketOrderIdDisplay" class="text-blue-200"></span></h2>
-            <button onclick="closeModal('adminTicketsModal')" class="text-white hover:text-red-300"><i class="fas fa-times text-xl"></i></button>
-        </div>
-        <div id="adminTicketsChatBox" class="flex-1 overflow-y-auto p-4 flex flex-col bg-gray-50 custom-scrollbar"></div>
-        <div class="p-4 border-t bg-white flex gap-2">
-            <input type="text" id="adminNewTicketMessage" maxlength="500" placeholder="پاسخ خود را بنویسید..." class="flex-1 p-3 border rounded-xl focus:outline-none focus:border-blue-500 bg-gray-50">
-            <button onclick="adminSendTicket()" id="btnAdminSendTicket" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 shadow font-bold"><i class="fas fa-paper-plane"></i> ارسال</button>
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col relative border-t-4 border-blue-500">
+        <button onclick="closeModal('adminTicketsModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-comments text-blue-500"></i> پشتیبانی سفارش: <span id="ticketOrderIdAdmin" class="text-sm"></span></h2>
+        
+        <div id="adminChatBox" class="flex-1 overflow-y-auto p-2 flex flex-col bg-gray-50 rounded-lg border inner-shadow"></div>
+        
+        <div class="mt-4 pt-3 flex gap-2">
+            <input type="text" id="adminNewMsg" placeholder="پاسخ خود را بنویسید..." class="flex-1 p-3 border rounded-xl outline-none focus:border-blue-500 shadow-sm">
+            <button onclick="adminSendTicket()" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 shadow"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 </div>
 
-<!-- Modal: مشاهده تصاویر -->
-<div id="adminImagesModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto relative custom-scrollbar">
-        <button onclick="closeModal('adminImagesModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-2xl"></i></button>
-        <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-3"><i class="fas fa-images text-purple-600 ml-2"></i> گالری تصاویر آپلود شده کاربر</h2>
-        <div id="adminImagesGallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+<!-- مودال بررسی فیش‌های واریزی -->
+<div id="receiptsModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('receiptsModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-receipt text-green-600"></i> بررسی فیش‌های واریزی (کارت به کارت)</h2>
+        <div id="receiptsContainer" class="space-y-4"></div>
+    </div>
+</div>
+
+<!-- مودال تصاویر -->
+<div id="adminImagesModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('adminImagesModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-images text-purple-600"></i> تصاویر آپلودی کاربر</h2>
+        <div id="adminImagesGallery" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
     </div>
 </div>
 
 <script>
-    let currentAdminToken = localStorage.getItem('adminToken');
+    let adminLogged = false;
     let allOrdersData = [];
-    let activeAdminEditId = null;
-    let activeAdminTicketId = null;
+    let currentAdminOrderId = null;
 
-    // متدهای کمکی برای Unpack کردن دیتا (استفاده مجدد از منطق کاربر)
-    function sanitizeExcel(str) { return str; } 
-    
-    function parseContactInfo(packedStr) {
-        let result = {};
-        if(!packedStr) return result;
-        if(packedStr.includes('::')) {
-            const parts = packedStr.split('||');
-            parts.forEach(p => {
-                const [key, val] = p.split('::');
-                result[key] = val;
+    // توابع تبدیل دیتای فشرده به متن خوانا
+    function unpackContact(str) {
+        if(!str) return "ندارد";
+        let res = "";
+        if(str.includes("::")) {
+            str.split("||").forEach(p => {
+                let [key, val] = p.split("::");
+                // تبدیل نام‌های انگلیسی به فارسی برای زیبایی
+                let pName = key;
+                if(key==="Phone") pName="شماره تماس";
+                if(key==="Email") pName="ایمیل";
+                if(key==="Address") pName="آدرس فیزیکی";
+                if(key==="GoogleMap") pName="گوگل مپ";
+                if(key==="Neshan") pName="نشان";
+                if(key==="Balad") pName="بلد";
+                if(key==="Insta") pName="اینستاگرام";
+                if(key==="Wa") pName="واتساپ";
+                if(key==="Telegram") pName="تلگرام";
+                res += `🔹 ${pName}: ${val}\n`;
             });
-        } else {
-            result['Address'] = packedStr; 
-        }
-        return result;
+        } else { res = str; }
+        return res;
     }
 
-    // متدهای عمومی فرم
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        document.getElementById(tabId).classList.remove('hidden');
-        
-        document.getElementById('btn_ordersTab').className = "px-6 py-3 bg-white text-gray-600 font-bold rounded-t-lg hover:bg-gray-50 transition whitespace-nowrap";
-        document.getElementById('btn_usersTab').className = "px-6 py-3 bg-white text-gray-600 font-bold rounded-t-lg hover:bg-gray-50 transition whitespace-nowrap";
-        
-        document.getElementById('btn_' + tabId).className = "px-6 py-3 bg-red-50 text-red-700 font-bold rounded-t-lg border-b-2 border-red-600 transition whitespace-nowrap";
-    }
-
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-    window.onload = function() {
-        if (currentAdminToken === 'true') {
-            document.getElementById('authSection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            document.getElementById('adminEmailDisplay').innerText = "مدیریت سیستم";
-            loadAdminData();
-        }
+    function extractBio(rawBio) {
+        if(!rawBio) return { bio: "ندارد", notes: "ندارد" };
+        let parts = rawBio.split("|||NOTES|||");
+        return { bio: parts[0] || "ندارد", notes: parts[1] || "ندارد" };
     }
 
     function handleAdminLogin() {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
-        if (!email || !password) return Swal.fire('خطا', 'اطلاعات وارد نشده است', 'warning');
+        const u = document.getElementById('adminUser').value;
+        const p = document.getElementById('adminPass').value;
+        if(!u || !p) return Swal.fire('خطا', 'فیلدها را پر کنید', 'warning');
 
-        Swal.fire({ title: 'در حال بررسی...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+        Swal.fire({title:'در حال تایید مدیریت...', didOpen:()=>Swal.showLoading()});
         fetch(GAS_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "admin_login", email: email, password: password })
-        }).then(res => res.json()).then(data => {
-            if (data.status === "success") {
-                Swal.fire({toast:true, position:'top-end', icon:'success', title:'خوش آمدید', showConfirmButton:false, timer:1500});
-                localStorage.setItem('adminToken', 'true');
-                setTimeout(() => window.location.reload(), 1000);
-            } else Swal.fire('خطا', data.message, 'error');
-        }).catch(err => { Swal.fire('خطا', 'مشکل ارتباطی.', 'error'); });
-    }
-
-    function logout() { localStorage.removeItem('adminToken'); window.location.reload(); }
-
-    function loadAdminData() {
-        const list = document.getElementById('adminOrdersList');
-        list.innerHTML = '<div class="col-span-full text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-gray-300"></i><p class="mt-4 text-gray-500">در حال دریافت تمامی داده‌ها...</p></div>';
-        
-        fetch(GAS_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "admin_get_all_data" })
+            method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+            body: JSON.stringify({action: "admin_login", username: u, password: p})
         }).then(res => res.json()).then(data => {
             if(data.status === 'success') {
-                allOrdersData = data.orders.reverse();
-                document.getElementById('totalOrdersCount').innerText = allOrdersData.length;
-                renderAdminOrders(allOrdersData);
-            } else {
-                Swal.fire('خطا', 'عدم دسترسی', 'error');
-            }
-        }).catch(err => {
-            list.innerHTML = '<p class="text-red-500 text-center col-span-full">خطا در ارتباط با سرور.</p>';
+                adminLogged = true; Swal.close();
+                document.getElementById('adminAuthSection').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                loadAllData();
+            } else Swal.fire('خطا', data.message, 'error');
+        }).catch(err => Swal.fire('خطا', 'مشکل ارتباط', 'error'));
+    }
+
+    function logoutAdmin() { location.reload(); }
+
+    function openCreateUserModal() { document.getElementById('createUserModal').classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function adminCreateUser() {
+        const email = document.getElementById('newUserEmail').value;
+        const pass = document.getElementById('newUserPass').value;
+        if(!email || !pass) return alert("پر کردن فیلدها الزامی است");
+
+        fetch(GAS_URL, {
+            method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+            body: JSON.stringify({action: "admin_create_user", email: email, password: pass})
+        }).then(res=>res.json()).then(d => {
+            if(d.status==='success') { Swal.fire('موفق', d.message, 'success'); closeModal('createUserModal'); }
+            else Swal.fire('خطا', d.message, 'error');
         });
     }
 
-    function renderAdminOrders(ordersArray) {
-        const list = document.getElementById('adminOrdersList');
+    function loadAllData() {
+        document.getElementById('ordersList').innerHTML = '<p class="col-span-full text-center text-indigo-500 font-bold"><i class="fas fa-spinner fa-spin text-2xl"></i> در حال بارگذاری اطلاعات دیتابیس...</p>';
+        fetch(GAS_URL, {
+            method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+            body: JSON.stringify({action: "admin_get_all_data"})
+        }).then(res=>res.json()).then(data => {
+            if(data.status === 'success') {
+                allOrdersData = data.orders;
+                renderOrders(allOrdersData);
+            } else Swal.fire('خطا', data.message, 'error');
+        });
+    }
+
+    function renderOrders(ordersArray) {
+        const list = document.getElementById('ordersList');
         list.innerHTML = '';
-        if(ordersArray.length === 0) { list.innerHTML = '<p class="col-span-full text-center text-gray-500">هیچ سفارشی یافت نشد.</p>'; return; }
+        if(ordersArray.length === 0) { list.innerHTML = '<p class="col-span-full text-center text-gray-500">هیچ سفارشی ثبت نشده است.</p>'; return; }
 
         ordersArray.forEach(order => {
-            let statClass = order.orderStatus === 'تکمیل شده' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
-            
+            // شمارش تعداد رسیدهای در انتظار بررسی
+            let pendingReceipts = order.receipts ? order.receipts.filter(r => r.status.includes('در انتظار')).length : 0;
+            let receiptBadge = pendingReceipts > 0 ? `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">${pendingReceipts} فیش جدید</span>` : '';
+
             list.innerHTML += `
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-lg transition relative flex flex-col">
-                    <div class="flex justify-between items-start mb-3 border-b pb-3">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 relative hover:shadow-md transition">
+                    ${receiptBadge}
+                    <div class="flex justify-between items-start border-b pb-3 mb-3">
                         <div>
-                            <h3 class="font-bold text-gray-900 text-lg">${order.siteName || 'بدون نام'}</h3>
-                            <p class="text-xs text-gray-500 mt-1" dir="ltr">${order.email}</p>
+                            <h3 class="font-bold text-lg text-indigo-900">${order.siteName}</h3>
+                            <p class="text-xs text-gray-500" dir="ltr">${order.orderId}</p>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fas fa-user text-gray-400"></i> ${order.email}</p>
                         </div>
-                        <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">${order.orderId}</span>
+                        <button onclick="openFormattedData('${order.orderId}')" class="bg-indigo-50 text-indigo-600 p-2 rounded hover:bg-indigo-100 transition" title="کپی اطلاعات پروژه"><i class="fas fa-copy text-xl"></i></button>
                     </div>
                     
-                    <div class="flex-1 text-sm text-gray-600 space-y-2 mb-4">
-                        <p><span class="font-bold">قالب:</span> <span dir="ltr">${order.template || '-'}</span></p>
-                        <p><span class="font-bold">ثبت:</span> <span dir="ltr">${order.regDate}</span></p>
-                        <p><span class="font-bold">مبلغ کل:</span> ${parseInt(order.totalPrice||0).toLocaleString()} T</p>
-                        <div class="mt-2 pt-2 border-t flex flex-col gap-1">
-                            <span class="px-2 py-1 rounded text-xs font-bold w-fit ${statClass}">${order.orderStatus}</span>
-                            <span class="px-2 py-1 rounded text-xs font-bold w-fit bg-blue-50 text-blue-700">${order.paymentStatus}</span>
-                        </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs mb-4">
+                        <div class="bg-gray-50 p-2 rounded border"><span class="text-gray-500 block">وضعیت:</span><span class="font-bold text-indigo-700">${order.orderStatus}</span></div>
+                        <div class="bg-gray-50 p-2 rounded border"><span class="text-gray-500 block">مالی:</span><span class="font-bold text-green-700">${order.paymentStatus}</span></div>
+                        <div class="bg-gray-50 p-2 rounded border col-span-2"><span class="text-gray-500 block">قالب و سئو:</span><span class="font-bold">${order.template} | سئو: ${order.seoDomainChoice}</span></div>
                     </div>
 
-                    <div class="grid grid-cols-4 gap-2 pt-3 border-t">
-                        <button onclick="generateCopyData('${order.orderId}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg flex flex-col items-center justify-center transition" title="کپی اطلاعات متن"><i class="fas fa-copy mb-1"></i><span class="text-[10px]">کپی دیتا</span></button>
-                        <button onclick="openAdminEditModal('${order.orderId}')" class="bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg flex flex-col items-center justify-center transition" title="ویرایش وضعیت و تحویل"><i class="fas fa-edit mb-1"></i><span class="text-[10px]">ویرایش</span></button>
-                        <button onclick="openAdminImagesModal('${order.orderId}')" class="bg-purple-50 hover:bg-purple-100 text-purple-600 py-2 rounded-lg flex flex-col items-center justify-center transition" title="گالری تصاویر"><i class="fas fa-images mb-1"></i><span class="text-[10px]">تصاویر</span></button>
-                        <button onclick="openAdminTicketsModal('${order.orderId}')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg flex flex-col items-center justify-center transition" title="پشتیبانی / چت"><i class="fas fa-comments mb-1"></i><span class="text-[10px]">پشتیبانی</span></button>
+                    <div class="flex flex-wrap gap-2 mt-4 border-t pt-4">
+                        <button onclick="openStatusModal('${order.orderId}')" class="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-yellow-600 shadow-sm"><i class="fas fa-edit"></i> ویرایش</button>
+                        <button onclick="openAdminTickets('${order.orderId}')" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-600 shadow-sm"><i class="fas fa-comments"></i> پشتیبانی</button>
+                        <button onclick="openReceiptsModal('${order.orderId}')" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-green-700 shadow-sm relative"><i class="fas fa-receipt"></i> فیش‌ها</button>
+                        <button onclick="openAdminImages('${order.orderId}')" class="flex-1 bg-purple-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-purple-600 shadow-sm"><i class="fas fa-images"></i> تصاویر</button>
                     </div>
                 </div>
             `;
@@ -327,242 +282,202 @@
     }
 
     function filterOrders() {
-        const query = document.getElementById('searchOrders').value.toLowerCase();
-        const filtered = allOrdersData.filter(o => 
-            (o.orderId && o.orderId.toLowerCase().includes(query)) || 
-            (o.siteName && o.siteName.toLowerCase().includes(query)) ||
-            (o.email && o.email.toLowerCase().includes(query))
+        let q = document.getElementById('searchInput').value.toLowerCase();
+        let filtered = allOrdersData.filter(o => 
+            o.orderId.toLowerCase().includes(q) || 
+            o.siteName.toLowerCase().includes(q) || 
+            o.email.toLowerCase().includes(q)
         );
-        renderAdminOrders(filtered);
+        renderOrders(filtered);
     }
 
-    // ---------------- کپی اطلاعات جامع ----------------
-    function generateCopyData(orderId) {
+    // تولید متن بسیار تمیز و منظم جهت کپی کردن ادمین
+    function openFormattedData(orderId) {
         const order = allOrdersData.find(o => o.orderId === orderId);
-        if(!order) return;
-
-        // تفکیک بیو و توضیحات
-        const rawBio = order.bio || "";
-        const bioParts = rawBio.split("|||NOTES|||");
-        const cleanBio = bioParts[0] || "ندارد";
-        const cleanNotes = bioParts.length > 1 ? bioParts[1] : "ندارد";
-
-        // Unpack تماس
-        const contact = parseContactInfo(order.contactInfo);
-
-        let text = `=================================\n`;
-        text += `🎯 اطلاعات سفارش طراحی سایت ToWeb\n`;
-        text += `=================================\n\n`;
+        const bInfo = extractBio(order.bio);
+        const contacts = unpackContact(order.contactInfo);
         
-        text += `📌 [شناسه سفارش]: ${order.orderId}\n`;
-        text += `📧 [ایمیل کاربر]: ${order.email}\n`;
-        text += `📅 [تاریخ ثبت]: ${order.regDate}\n\n`;
+        let text = `======================================
+📌 اطلاعات جامع سفارش
+======================================
+▪️ کد سفارش: ${order.orderId}
+▪️ نام کاربری (ایمیل): ${order.email}
+▪️ تاریخ ثبت: ${order.regDate || 'نامشخص'}
 
-        text += `--- اطلاعات اصلی ---\n`;
-        text += `🏢 نام سایت: ${order.siteName}\n`;
-        text += `💡 شعار: ${order.slogan}\n`;
-        text += `🎨 قالب انتخابی: ${order.template}\n`;
-        text += `🌐 تمایل به دامنه و سئو: ${order.seoDomainChoice}\n`;
-        text += `🌍 وضعیت دامنه درخواستی: ${order.domainStatus || 'ثبت نشده'}\n`;
-        text += `🔮 دامنه‌های پیشنهادی کاربر: ${order.proposedDomains || 'ندارد'}\n\n`;
+🌍 [ مشخصات اصلی سایت ]
+--------------------------------------
+🔹 نام سایت: ${order.siteName}
+🔹 شعار: ${order.slogan}
+🔹 قالب انتخابی: ${order.template}
+🔹 خدمات سئو و دامنه اختصاصی: ${order.seoDomainChoice}
 
-        text += `--- محتوا و طراحی ---\n`;
-        text += `📝 بیوگرافی / درباره ما:\n${cleanBio}\n\n`;
-        text += `🖌️ توضیحات و تغییرات طراحی:\n${cleanNotes}\n\n`;
+📝 [ درباره کسب و کار / بیوگرافی ]
+--------------------------------------
+${bInfo.bio}
 
-        text += `--- اطلاعات تماس و ارتباطی ---\n`;
-        text += `📞 شماره تماس: ${contact['Phone'] || 'ندارد'}\n`;
-        text += `✉️ ایمیل کاری: ${contact['Email'] || 'ندارد'}\n`;
-        text += `📍 آدرس فیزیکی: ${contact['Address'] || 'ندارد'}\n\n`;
+🎨 [ توضیحات طراحی و تغییرات ]
+--------------------------------------
+${bInfo.notes}
 
-        text += `--- مسیریاب‌ها ---\n`;
-        text += `🗺️ گوگل مپ: ${contact['GoogleMap'] || 'ندارد'}\n`;
-        text += `🔴 مپ نشان: ${contact['Neshan'] || 'ندارد'}\n`;
-        text += `🟢 مپ بلد: ${contact['Balad'] || 'ندارد'}\n\n`;
+📞 [ راه‌های ارتباطی و شبکه‌های اجتماعی ]
+--------------------------------------
+${contacts}
 
-        text += `--- شبکه‌های اجتماعی ---\n`;
-        text += `📸 اینستاگرام: ${contact['Insta'] || 'ندارد'}\n`;
-        text += `💬 واتساپ: ${contact['Wa'] || 'ندارد'}\n`;
-        text += `✈️ تلگرام: ${contact['Telegram'] || 'ندارد'}\n`;
-        text += `🟠 ایتا: ${contact['Eitaa'] || 'ندارد'}\n`;
-        text += `🟣 روبیکا: ${contact['Rubika'] || 'ندارد'}\n\n`;
+🌐 [ وضعیت دامنه ]
+--------------------------------------
+وضعیت فعلی: ${order.domainStatus || 'ثبت نشده'}
+پیشنهادات کاربر: ${order.proposedDomains || 'ندارد'}
 
-        text += `=================================\n`;
+======================================
+پایان گزارش
+======================================`;
 
-        document.getElementById('copyDataTextarea').value = text;
-        document.getElementById('copyDataModal').classList.remove('hidden');
+        document.getElementById('formattedDataText').innerText = text;
+        document.getElementById('projectDataModal').classList.remove('hidden');
     }
 
-    function copyToClipboardTextarea() {
-        const textarea = document.getElementById('copyDataTextarea');
-        textarea.select();
-        textarea.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(textarea.value).then(() => {
-            Swal.fire({toast:true, position:'top-end', icon:'success', title:'کپی شد!', showConfirmButton:false, timer:1500});
+    function copyFormattedData() {
+        const text = document.getElementById('formattedDataText').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'در کلیپ‌بورد کپی شد!', showConfirmButton: false, timer: 1500});
         });
     }
 
-    // ---------------- ویرایش و تحویل ----------------
-    function openAdminEditModal(orderId) {
+    // مودال ویرایش وضعیت و تحویل
+    function openStatusModal(orderId) {
+        currentAdminOrderId = orderId;
         const order = allOrdersData.find(o => o.orderId === orderId);
-        if(!order) return;
-        activeAdminEditId = orderId;
-
-        document.getElementById('adminEditOrderId').innerText = orderId;
-        document.getElementById('adminOrderStatus').value = order.orderStatus || 'ثبت اولیه';
-        document.getElementById('adminPaymentStatus').value = order.paymentStatus || 'پرداخت نشده';
-        document.getElementById('adminDomainStatus').value = order.domainStatus || '';
+        document.getElementById('editOrderId').innerText = orderId;
         
-        document.getElementById('adminSiteUrl').value = order.siteUrl || '';
-        document.getElementById('adminGithubLink').value = order.githubLink || '';
-        document.getElementById('adminSiteEmail').value = order.siteEmail || '';
-        document.getElementById('adminSitePass').value = order.sitePass || '';
+        document.getElementById('inpOrderStatus').value = order.orderStatus.trim();
+        document.getElementById('inpPaymentStatus').value = order.paymentStatus.trim();
+        
+        document.getElementById('inpSiteUrl').value = order.siteUrl || "";
+        document.getElementById('inpSiteEmail').value = order.siteEmail || "";
+        document.getElementById('inpSitePass').value = order.sitePass || "";
+        document.getElementById('inpGithub').value = order.githubLink || "";
 
-        document.getElementById('editOrderModal').classList.remove('hidden');
+        document.getElementById('statusModal').classList.remove('hidden');
     }
 
-    function adminSaveOrderUpdates() {
-        Swal.fire({ title: 'در حال ذخیره...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
-        fetch(GAS_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ 
-                action: "admin_update_order", 
-                orderId: activeAdminEditId,
-                orderStatus: document.getElementById('adminOrderStatus').value,
-                paymentStatus: document.getElementById('adminPaymentStatus').value,
-                domainStatus: document.getElementById('adminDomainStatus').value,
-                siteUrl: document.getElementById('adminSiteUrl').value,
-                githubLink: document.getElementById('adminGithubLink').value,
-                siteEmail: document.getElementById('adminSiteEmail').value,
-                sitePass: document.getElementById('adminSitePass').value
-            })
-        }).then(res => res.json()).then(data => {
-            if(data.status === 'success') {
-                Swal.fire({toast:true, position:'top-end', icon:'success', title:'تغییرات ثبت شد', showConfirmButton:false, timer:1500});
-                closeModal('editOrderModal');
-                loadAdminData();
-            } else Swal.fire('خطا', data.message, 'error');
-        }).catch(err => { Swal.fire('خطا', 'خطا در ارتباط', 'error'); });
+    function saveAdminOrderUpdates() {
+        Swal.fire({title:'در حال ذخیره...', didOpen:()=>Swal.showLoading()});
+        const payload = {
+            action: "admin_update_order",
+            orderId: currentAdminOrderId,
+            orderStatus: document.getElementById('inpOrderStatus').value,
+            paymentStatus: document.getElementById('inpPaymentStatus').value,
+            siteUrl: document.getElementById('inpSiteUrl').value,
+            siteEmail: document.getElementById('inpSiteEmail').value,
+            sitePass: document.getElementById('inpSitePass').value,
+            githubLink: document.getElementById('inpGithub').value
+        };
+
+        fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) }).then(r=>r.json()).then(d=>{
+            if(d.status==='success') { Swal.fire('موفق', d.message, 'success'); closeModal('statusModal'); loadAllData(); }
+            else Swal.fire('خطا', d.message, 'error');
+        });
     }
 
-    // ---------------- پشتیبانی (تیکت ادمین) ----------------
-    function openAdminTicketsModal(orderId) {
-        activeAdminTicketId = orderId;
-        document.getElementById('adminTicketOrderIdDisplay').innerText = orderId;
-        const chatBox = document.getElementById('adminTicketsChatBox');
-        chatBox.innerHTML = '';
+    // پشتیبانی
+    function openAdminTickets(orderId) {
+        currentAdminOrderId = orderId;
+        document.getElementById('ticketOrderIdAdmin').innerText = orderId;
+        const box = document.getElementById('adminChatBox');
+        box.innerHTML = '';
         
         const order = allOrdersData.find(o => o.orderId === orderId);
         if(order && order.tickets && order.tickets.length > 0) {
-            order.tickets.forEach(ticket => {
-                const isAdmin = ticket.sender === 'پشتیبانی ToWeb';
-                const bubbleClass = isAdmin ? 'chat-admin' : 'chat-user';
-                const senderName = isAdmin ? 'شما (پشتیبانی)' : order.email;
-                chatBox.innerHTML += `
-                    <div class="chat-bubble shadow-sm ${bubbleClass}">
-                        <div class="text-[10px] opacity-70 mb-1 font-bold border-b pb-1 border-opacity-20" dir="ltr">${senderName} <span class="font-normal mx-2">${ticket.date}</span></div>
-                        <div class="mt-1 leading-relaxed text-sm">${ticket.message}</div>
+            order.tickets.forEach(t => {
+                let isAdmin = t.sender === "پشتیبانی ToWeb";
+                box.innerHTML += `
+                    <div class="chat-bubble shadow-sm ${isAdmin ? 'chat-admin' : 'chat-user'}">
+                        <div class="text-xs opacity-70 mb-1 border-b pb-1 font-bold">${t.sender} <span class="font-normal text-[10px] mx-2">${t.date}</span></div>
+                        <div>${t.message}</div>
                     </div>`;
             });
-            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
-        } else chatBox.innerHTML = '<p class="text-center text-gray-400 mt-10 font-bold empty-ticket-text">پیامی یافت نشد.</p>';
+            setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
+        } else { box.innerHTML = '<p class="text-center text-gray-400 mt-4">پیامی یافت نشد.</p>'; }
+        
         document.getElementById('adminTicketsModal').classList.remove('hidden');
     }
 
     function adminSendTicket() {
-        const msgInput = document.getElementById('adminNewTicketMessage');
-        const rawMsg = msgInput.value.trim();
-        if(!rawMsg || !activeAdminTicketId) return;
-
-        const chatBox = document.getElementById('adminTicketsChatBox');
-        const emptyText = chatBox.querySelector('.empty-ticket-text');
-        if (emptyText) emptyText.remove();
-
-        const tempId = 'msg_temp_' + Date.now();
-        const currentDate = new Date().toLocaleDateString('fa-IR');
+        const msg = document.getElementById('adminNewMsg').value.trim();
+        if(!msg) return;
         
-        chatBox.innerHTML += `
-            <div id="${tempId}" class="chat-bubble shadow-sm chat-admin opacity-60">
-                <div class="text-[10px] opacity-70 mb-1 font-bold border-b pb-1 border-opacity-20">شما <span class="font-normal mx-2"><i class="fas fa-spinner fa-spin"></i> در حال ارسال...</span></div>
-                <div class="mt-1 leading-relaxed text-sm">${rawMsg}</div>
-            </div>`;
-        setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
-
-        msgInput.value = ''; msgInput.disabled = true;
-
         fetch(GAS_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "admin_submit_ticket", orderId: activeAdminTicketId, message: rawMsg })
-        }).then(res => res.json()).then(data => {
-            msgInput.disabled = false;
-            if (data.status === 'success') {
-                const tempBubble = document.getElementById(tempId);
-                if (tempBubble) {
-                    tempBubble.classList.remove('opacity-60');
-                    tempBubble.innerHTML = `
-                        <div class="text-[10px] opacity-70 mb-1 font-bold border-b pb-1 border-opacity-20">شما <span class="font-normal mx-2">${currentDate}</span></div>
-                        <div class="mt-1 leading-relaxed text-sm">${rawMsg}</div>`;
-                }
-                const order = allOrdersData.find(o => o.orderId === activeAdminTicketId);
-                if(order) {
-                    if(!order.tickets) order.tickets = [];
-                    order.tickets.push({ sender: 'پشتیبانی ToWeb', message: rawMsg, date: currentDate });
-                }
-            } else {
-                document.getElementById(tempId).remove();
-                Swal.fire('خطا', data.message, 'error');
+            method: "POST", body: JSON.stringify({action: "admin_reply_ticket", orderId: currentAdminOrderId, message: msg})
+        }).then(r=>r.json()).then(d=>{
+            if(d.status==='success') {
+                document.getElementById('adminNewMsg').value = '';
+                loadAllData(); // برای راحتی رفرش کل دیتا (میتوانید بهینه تر کنید)
+                setTimeout(()=>openAdminTickets(currentAdminOrderId), 1000);
             }
-        }).catch(err => { 
-            msgInput.disabled = false; 
-            document.getElementById(tempId).remove();
-            Swal.fire('خطا', 'مشکل در ارتباط', 'error'); 
         });
     }
 
-    // ---------------- تصاویر ----------------
-    function openAdminImagesModal(orderId) {
+    // مشاهده و بررسی فیش‌ها
+    function openReceiptsModal(orderId) {
         const order = allOrdersData.find(o => o.orderId === orderId);
-        const gallery = document.getElementById('adminImagesGallery');
-        gallery.innerHTML = '';
-        
-        if(!order || !order.images || order.images.length === 0) {
-            gallery.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10 font-bold">هیچ تصویری برای این سفارش ارسال نشده است.</p>';
+        const container = document.getElementById('receiptsContainer');
+        container.innerHTML = '';
+
+        if(!order.receipts || order.receipts.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500">هیچ فیش دستی برای این سفارش ارسال نشده است.</p>';
         } else {
-            order.images.forEach((img, index) => {
-                // استفاده از لینک اصلی برای دانلود و لینک thumbnail برای نمایش
-                const viewUrl = img.url.replace('thumbnail?id=', 'file/d/') + '/view';
-                gallery.innerHTML += `
-                    <div class="border border-gray-200 rounded-xl p-2 bg-gray-50 shadow-sm flex flex-col">
-                        <a href="${viewUrl}" target="_blank" class="h-40 w-full mb-2 bg-gray-200 rounded-lg overflow-hidden block border hover:opacity-80 transition relative">
-                            <img src="${img.url}" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black bg-opacity-40 transition text-white"><i class="fas fa-external-link-alt text-2xl"></i></div>
-                        </a>
-                        <p class="text-xs text-gray-800 font-bold text-center truncate px-1" title="${img.desc}">${index + 1}. ${img.desc}</p>
+            order.receipts.forEach(r => {
+                let badgeClass = r.status.includes('تایید') ? 'bg-green-100 text-green-800' : (r.status.includes('رد') ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
+                container.innerHTML += `
+                    <div class="border rounded-lg p-4 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <p class="font-bold text-gray-800">قسط مرحله: ${r.stage}</p>
+                            <p class="text-sm text-gray-600">مبلغ: ${r.amount} | زمان: <span dir="ltr">${r.date}</span></p>
+                            <span class="text-xs px-2 py-1 rounded mt-2 inline-block font-bold ${badgeClass}">${r.status}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="${r.link}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 shadow"><i class="fas fa-eye"></i> مشاهده فیش</a>
+                            ${r.status.includes('در انتظار') ? `
+                                <button onclick="handleReceiptAdmin('${orderId}', ${r.rowIdx}, 'تایید شده', ${r.stage})" class="bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 shadow"><i class="fas fa-check"></i></button>
+                                <button onclick="handleReceiptAdmin('${orderId}', ${r.rowIdx}, 'رد شده', ${r.stage})" class="bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600 shadow"><i class="fas fa-times"></i></button>
+                            ` : ''}
+                        </div>
                     </div>
                 `;
             });
         }
-        document.getElementById('adminImagesModal').classList.remove('hidden');
+        document.getElementById('receiptsModal').classList.remove('hidden');
     }
 
-    // ---------------- ثبت نام کاربر ----------------
-    function adminRegisterUser() {
-        const email = document.getElementById('newUserEmail').value.trim();
-        const pass = document.getElementById('newUserPass').value.trim();
-        
-        if(!email || !pass) return Swal.fire('اخطار', 'ایمیل و رمز را کامل وارد کنید.', 'warning');
-
-        Swal.fire({ title: 'در حال ایجاد حساب...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+    function handleReceiptAdmin(orderId, rowIdx, newStatus, stage) {
+        Swal.fire({title:'درحال اعمال...', didOpen:()=>Swal.showLoading()});
         fetch(GAS_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "admin_register_user", email: email, password: pass })
-        }).then(res => res.json()).then(data => {
-            if (data.status === "success") {
-                Swal.fire('موفق', 'حساب کاربری با موفقیت ساخته شد و اکنون قابل استفاده است.', 'success');
-                document.getElementById('newUserEmail').value = '';
-                document.getElementById('newUserPass').value = '';
-            } else Swal.fire('خطا', data.message, 'error');
-        }).catch(err => { Swal.fire('خطا', 'مشکل ارتباطی.', 'error'); });
+            method: "POST", body: JSON.stringify({action: "admin_handle_receipt", orderId: orderId, receiptRow: rowIdx, newStatus: newStatus, stage: stage})
+        }).then(r=>r.json()).then(d=>{
+            if(d.status==='success') { Swal.fire('موفق', d.message, 'success'); closeModal('receiptsModal'); loadAllData(); }
+            else Swal.fire('خطا', d.message, 'error');
+        });
+    }
+
+    // گالری تصاویر مدیریت
+    function openAdminImages(orderId) {
+        const order = allOrdersData.find(o => o.orderId === orderId);
+        const gallery = document.getElementById('adminImagesGallery');
+        gallery.innerHTML = '';
+        if(!order.images || order.images.length === 0) {
+            gallery.innerHTML = '<p class="col-span-full text-center text-gray-500">تصویری آپلود نشده است.</p>';
+        } else {
+            order.images.forEach(img => {
+                gallery.innerHTML += `
+                    <div class="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
+                        <a href="https://drive.google.com/file/d/${img.id}/view" target="_blank">
+                            <img src="${img.url}" class="w-full h-32 object-cover" title="کلیک برای نمایش بزرگ">
+                        </a>
+                        <p class="text-xs p-2 text-center bg-gray-100 font-bold truncate" title="${img.desc}">${img.desc}</p>
+                    </div>`;
+            });
+        }
+        document.getElementById('adminImagesModal').classList.remove('hidden');
     }
 </script>
 </body>
