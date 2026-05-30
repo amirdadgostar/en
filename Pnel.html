@@ -440,7 +440,7 @@
     let activePayStage = 1;
     let activePayAmount = 0;
 
-    // --- توابع فشرده سازی هوشمند تصاویر (بر اساس الگوریتم درخواستی) ---
+    // --- توابع فشرده سازی هوشمند تصاویر (بر اساس الگوریتم دقیق و درخواستی کاربر) ---
     function loadImageFromFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -506,19 +506,19 @@
         ctx.drawImage(img, 0, 0, w, h);
 
         const mimeType = usePNG ? 'image/png' : 'image/jpeg';
-        let quality = usePNG ? undefined : 0.85; 
+        let quality = usePNG ? undefined : 0.65; 
         let blob = await canvasToBlob(canvas, mimeType, quality);
 
         if (!usePNG) {
-            while (blob.size > maxBytes && quality > 0.05) {
-                quality -= 0.1;
+            while (blob.size > maxBytes && quality > 0.01) {
+                quality = Math.max(0.01, quality - 0.05);
                 blob = await canvasToBlob(canvas, mimeType, quality);
             }
         }
 
         let resizeAttempts = 0;
-        while (blob.size > maxBytes && (w > MIN_DIM || h > MIN_DIM) && resizeAttempts < 20) {
-            const scaleFactor = 0.8; 
+        while (blob.size > maxBytes && (w > MIN_DIM || h > MIN_DIM) && resizeAttempts < 50) {
+            const scaleFactor = 0.7; 
             w = Math.max(MIN_DIM, Math.round(w * scaleFactor));
             h = Math.max(MIN_DIM, Math.round(h * scaleFactor));
             canvas = document.createElement('canvas');
@@ -1276,7 +1276,30 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ارسال...';
         btn.disabled = true;
 
-        Swal.fire({ title: 'فشرده‌سازی خودکار', text: 'تصویر در حال بهینه‌سازی و آپلود است...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+        // آپدیت سریع و بدون درنگ رابط کاربری در گالری (درخواست دوم کاربر)
+        const gallery = document.getElementById('uploadedImagesGallery');
+        const emptyText = gallery.querySelector('.col-span-full');
+        if (emptyText) emptyText.remove();
+
+        const tempId = 'img_temp_' + Date.now();
+        const localObjUrl = URL.createObjectURL(file);
+        const badge = document.getElementById('imageCountBadge');
+        const currentImgCount = order.images ? order.images.length : 0;
+        badge.innerText = `${currentImgCount + 1} / 10`;
+
+        gallery.innerHTML += `
+            <div id="${tempId}" class="border border-gray-200 rounded-xl p-2 bg-white shadow-sm flex flex-col relative overflow-hidden transition-all duration-300">
+                <div class="absolute inset-0 bg-white bg-opacity-80 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+                    <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
+                    <span class="text-xs font-bold text-blue-800 mt-2">در حال بهینه‌سازی و آپلود...</span>
+                </div>
+                <div class="h-32 w-full mb-2 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center border-b">
+                    <img src="${localObjUrl}" alt="${desc}" class="max-h-full max-w-full object-cover">
+                </div>
+                <p class="text-xs text-gray-700 font-bold bg-yellow-50 p-1.5 rounded text-center truncate border border-yellow-100" title="${desc}">${currentImgCount + 1}. ${desc}</p>
+            </div>
+        `;
+        gallery.scrollTop = gallery.scrollHeight;
 
         try {
             const compressed = await smartCompressImage(file, 190);
@@ -1294,13 +1317,38 @@
                 btn.innerHTML = oldHtml; btn.disabled = false;
                 if(data.status === 'success') {
                     fileInput.value = ''; descInput.value = '';
-                    Swal.fire({title: 'موفق', text: 'تصویر با موفقیت فشرده و آپلود شد', icon: 'success', timer: 1500});
-                    loadOrders(); 
-                    setTimeout(() => openImageModal(activeActionOrderId), 1500); 
-                } else Swal.fire('خطا', data.message, 'error');
-            }).catch(err => { btn.innerHTML = oldHtml; btn.disabled = false; Swal.fire('خطا', 'مشکل ارتباط با سرور', 'error'); });
+                    
+                    // حذف افکت بارگذاری از روی عکس
+                    const tempEl = document.getElementById(tempId);
+                    if(tempEl) {
+                        const overlay = tempEl.querySelector('.absolute.inset-0');
+                        if(overlay) overlay.remove();
+                    }
+                    
+                    // افزودن به دیتای محلی برای جلوگیری از پاک شدن در صورت بستن فرم
+                    if(!order.images) order.images = [];
+                    order.images.push({ url: localObjUrl, desc: desc });
+                    
+                    // فراخوانی در پس زمینه جهت آپدیت شدن دیتابیس بدون بسته شدن صفحه
+                    loadOrders();
+                } else {
+                    document.getElementById(tempId).remove();
+                    badge.innerText = `${currentImgCount} / 10`;
+                    if(currentImgCount === 0) renderImagesGallery([]);
+                    Swal.fire('خطا', data.message, 'error');
+                }
+            }).catch(err => { 
+                btn.innerHTML = oldHtml; btn.disabled = false; 
+                document.getElementById(tempId).remove();
+                badge.innerText = `${currentImgCount} / 10`;
+                if(currentImgCount === 0) renderImagesGallery([]);
+                Swal.fire('خطا', 'مشکل ارتباط با سرور', 'error'); 
+            });
         } catch (error) {
             btn.innerHTML = oldHtml; btn.disabled = false;
+            document.getElementById(tempId).remove();
+            badge.innerText = `${currentImgCount} / 10`;
+            if(currentImgCount === 0) renderImagesGallery([]);
             Swal.fire('خطا', 'خطا در فشرده سازی تصویر', 'error');
         }
     }
