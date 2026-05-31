@@ -19,22 +19,15 @@
         /* Loading Animation */
         .skeleton-box { background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite linear; border-radius: 8px; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-        /* 🆕 استایل برای سفارش‌های گذشته از ۱۰ روز */
-        .order-overdue {
-            border: 2px solid #ef4444 !important;
-            animation: overdueBlink 1s infinite;
-        }
-        @keyframes overdueBlink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
+        .status-section { margin-bottom: 2rem; }
+        .status-section h2 { margin-bottom: 1rem; }
+        .load-more-btn { cursor: pointer; }
     </style>
 </head>
 <body class="text-gray-800">
 
 <script>
-    // حتما لینک دیپلوی شده اسکریپت خود را اینجا قرار دهید:
+    // لینک دیپلوی شده اسکریپت خود را اینجا قرار دهید:
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwLW1tuNPMkZW_ubMe5GqvM9vAvIrfz2NMoUfgYWFCai4-8w_YLvZsphbUceupXdfH5/exec"; 
 </script>
 
@@ -65,29 +58,34 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-indigo-900"><i class="fas fa-tasks ml-2"></i> لیست کل سفارشات سیستم</h1>
         </div>
-        <input type="text" id="searchInput" onkeyup="filterOrders()" placeholder="جستجو بر اساس نام سایت، کد سفارش یا ایمیل کاربر..." class="w-full mb-6 p-4 rounded-xl shadow-sm border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-300 font-bold text-indigo-900">
+        <input type="text" id="searchInput" onkeyup="handleSearch()" placeholder="جستجو بر اساس نام سایت، کد سفارش یا ایمیل کاربر..." class="w-full mb-6 p-4 rounded-xl shadow-sm border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-300 font-bold text-indigo-900">
         
-        <!-- 🆕 به‌جای grid از container برای گروه‌بندی‌ها استفاده می‌شود -->
-        <div id="ordersSections" class="space-y-8"></div>
+        <!-- مخزن نمایش دسته‌بندی شده -->
+        <div id="ordersContainer"></div>
     </div>
 </div>
 
-<!-- مودال ایجاد کاربر جدید توسط ادمین -->
+<!-- مودال ایجاد کاربر جدید توسط ادمین (توسعه‌یافته) -->
 <div id="createUserModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl w-full max-w-sm relative shadow-2xl border-t-4 border-green-500">
+    <div class="bg-white p-6 rounded-xl w-full max-w-md relative shadow-2xl border-t-4 border-green-500">
         <button onclick="closeModal('createUserModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
         <h2 class="text-lg font-bold mb-4 text-gray-800"><i class="fas fa-user-plus text-green-500"></i> ساخت حساب برای کاربر</h2>
-        <input type="email" id="newUserEmail" placeholder="ایمیل کاربر (نام کاربری)" class="w-full mb-3 p-3 border rounded-lg bg-gray-50" dir="ltr">
-        <input type="text" id="newUserPass" placeholder="رمز عبور کاربر" class="w-full mb-6 p-3 border rounded-lg bg-gray-50" dir="ltr">
-        <button onclick="adminCreateUser()" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 shadow"><i class="fas fa-check"></i> ثبت نام و ایجاد کاربر</button>
+        <div class="space-y-3">
+            <input type="text" id="newUserFullName" placeholder="نام و نام خانوادگی" class="w-full p-3 border rounded-lg bg-gray-50">
+            <input type="text" id="newUserNationalID" placeholder="کد ملی" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
+            <input type="text" id="newUserPhone" placeholder="شماره تماس" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
+            <input type="email" id="newUserEmail" placeholder="ایمیل (نام کاربری)" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
+            <input type="text" id="newUserPass" placeholder="رمز عبور" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
+        </div>
+        <button onclick="adminCreateUser()" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 shadow mt-4"><i class="fas fa-check"></i> ثبت نام و ایجاد کاربر</button>
     </div>
 </div>
 
-<!-- مودال نمایش مرتب متن برای کپی (بخش مهم درخواستی) -->
+<!-- مودال نمایش مرتب متن برای کپی -->
 <div id="copyDataModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
         <div class="p-4 border-b flex justify-between items-center bg-indigo-50 rounded-t-xl">
-            <h2 class="font-bold text-indigo-900 text-lg"><i class="fas fa-file-alt ml-2"></i> اطلاعات جامع و مرتب پروژه</h2>
+            <h2 class="font-bold text-indigo-900 text-lg"><i class="fas fa-file-alt ml-2"></i> درخواست طراحی سایت</h2>
             <div class="flex gap-2">
                 <button onclick="copyToClipboard()" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 font-bold text-sm"><i class="fas fa-copy ml-1"></i> کپی تمام متن</button>
                 <button onclick="closeModal('copyDataModal')" class="text-red-500 p-2 hover:bg-red-50 rounded"><i class="fas fa-times text-xl"></i></button>
@@ -174,13 +172,36 @@
 </div>
 
 <script>
+    // متغیرهای سراسری
     let allOrdersData = [];
     let currentOrderId = null;
+    let adminToken = null;
 
-    // 🆕 وضعیت نمایش تعداد در هر بخش (کلید: عنوان بخش)
-    let sectionDisplayCounts = {};
+    // ------------------------------ مدیریت نشست (Token) ------------------------------
+    function checkSavedSession() {
+        const token = sessionStorage.getItem('adminToken');
+        if (!token) return;
+        fetch(GAS_URL, {
+            method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+            body: JSON.stringify({action: "verify_token", token: token})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                adminToken = token;
+                document.getElementById('adminAuthSection').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                loadAllData();
+            } else {
+                sessionStorage.removeItem('adminToken');
+            }
+        })
+        .catch(() => sessionStorage.removeItem('adminToken'));
+    }
 
-    // توابع تبدیل دیتای فشرده (دقیقا مطابق الگوریتم سمت کاربر شما)
+    window.addEventListener('load', checkSavedSession);
+
+    // ------------------------------ توابع کمکی ------------------------------
     function unpackContactForAdmin(str) {
         if(!str) return "اطلاعاتی ثبت نشده است.";
         let res = "";
@@ -197,7 +218,7 @@
                 let pName = mapNames[key] || key;
                 res += `${pName}: ${val}\n`;
             });
-        } else { res = str; } // حالت قدیمی
+        } else { res = str; }
         return res;
     }
 
@@ -207,27 +228,9 @@
         return { bio: parts[0] || "ندارد", notes: parts[1] || "ندارد" };
     }
 
-    // 🆕 نگاشت وضعیت‌ها به عناوین بخش‌ها
-    const SECTION_TITLES = [
-        "ثبت اولیه",
-        "در انتظار شروع پروژه",
-        "در حال طراحی",
-        "آماده تحویل (در انتظار تسویه)",
-        "تکمیل شده نهایی"
-    ];
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    function getStatusGroup(orderStatus) {
-        if (!orderStatus) return "ثبت اولیه";
-        const s = orderStatus.trim();
-        if (s.includes("ثبت اولیه")) return "ثبت اولیه";
-        if (s.includes("در انتظار شروع")) return "در انتظار شروع پروژه";
-        if (s.includes("در حال طراحی")) return "در حال طراحی";
-        if (s.includes("آماده تحویل")) return "آماده تحویل (در انتظار تسویه)";
-        if (s.includes("تکمیل")) return "تکمیل شده نهایی";
-        return "ثبت اولیه"; // fallback
-    }
-
-    // لاگین
+    // ------------------------------ لاگین ------------------------------
     function handleAdminLogin() {
         const u = document.getElementById('adminUser').value;
         const p = document.getElementById('adminPass').value;
@@ -240,139 +243,172 @@
         }).then(res => res.json()).then(data => {
             if(data.status === 'success') {
                 Swal.close();
+                adminToken = data.token;
+                sessionStorage.setItem('adminToken', data.token);
                 document.getElementById('adminAuthSection').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
                 loadAllData();
-            } else Swal.fire('خطا', data.message, 'error');
+            } else {
+                Swal.fire('خطا', data.message, 'error');
+            }
         }).catch(err => Swal.fire('خطا', 'مشکل ارتباط با سرور', 'error'));
     }
 
-    function logoutAdmin() { location.reload(); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-    function openCreateUserModal() { document.getElementById('createUserModal').classList.remove('hidden'); }
+    function logoutAdmin() {
+        sessionStorage.removeItem('adminToken');
+        location.reload();
+    }
 
-    // ساخت کاربر
+    // ------------------------------ ایجاد کاربر جدید (توسعه‌یافته) ------------------------------
+    function openCreateUserModal() {
+        document.getElementById('createUserModal').classList.remove('hidden');
+    }
+
     function adminCreateUser() {
-        const email = document.getElementById('newUserEmail').value;
-        const pass = document.getElementById('newUserPass').value;
-        if(!email || !pass) return Swal.fire('خطا', 'پر کردن فیلدها الزامی است', 'warning');
+        const fullName = document.getElementById('newUserFullName').value.trim();
+        const nationalID = document.getElementById('newUserNationalID').value.trim();
+        const phone = document.getElementById('newUserPhone').value.trim();
+        const email = document.getElementById('newUserEmail').value.trim();
+        const pass = document.getElementById('newUserPass').value.trim();
+
+        if(!fullName || !nationalID || !phone || !email || !pass) {
+            return Swal.fire('خطا', 'تمام فیلدها الزامی هستند', 'warning');
+        }
 
         Swal.fire({title:'در حال ساخت...', didOpen:()=>Swal.showLoading()});
         fetch(GAS_URL, {
             method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
-            body: JSON.stringify({action: "admin_create_user", email: email, password: pass})
-        }).then(res=>res.json()).then(d => {
-            if(d.status==='success') { Swal.fire('موفق', d.message, 'success'); closeModal('createUserModal'); }
-            else Swal.fire('خطا', d.message, 'error');
+            body: JSON.stringify({
+                action: "admin_create_user",
+                fullName, nationalID, phone, email, password: pass
+            })
+        }).then(res => res.json()).then(d => {
+            if(d.status === 'success') {
+                Swal.fire('موفق', d.message, 'success');
+                closeModal('createUserModal');
+            } else {
+                Swal.fire('خطا', d.message, 'error');
+            }
         });
     }
 
-    // لود دیتا
-    function loadAllData() {
-        const container = document.getElementById('ordersSections');
+    // ------------------------------ لود داده‌ها با جستجوی سمت سرور ------------------------------
+    function loadAllData(searchQuery = '') {
+        const container = document.getElementById('ordersContainer');
         container.innerHTML = `<div class="skeleton-box h-32 w-full mb-4"></div><div class="skeleton-box h-32 w-full"></div>`;
         
+        const body = {action: "admin_get_all_data"};
+        if (searchQuery.trim()) body.search = searchQuery.trim();
+
         fetch(GAS_URL, {
             method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
-            body: JSON.stringify({action: "admin_get_all_data"})
-        }).then(res=>res.json()).then(data => {
+            body: JSON.stringify(body)
+        })
+        .then(res => res.json())
+        .then(data => {
             if(data.status === 'success') {
                 allOrdersData = data.orders;
-                // ریست کردن تعداد نمایش هر بخش
-                sectionDisplayCounts = {};
-                renderSections();
-            } else Swal.fire('خطا', data.message, 'error');
-        });
+                renderOrdersCategorized(allOrdersData);
+            } else {
+                Swal.fire('خطا', data.message, 'error');
+            }
+        })
+        .catch(() => Swal.fire('خطا', 'مشکل ارتباط با سرور', 'error'));
     }
 
-    // 🆕 رندر بخش‌بندی شده
-    function renderSections(ordersArray = null) {
-        const source = ordersArray || allOrdersData;
-        const container = document.getElementById('ordersSections');
+    function handleSearch() {
+        const q = document.getElementById('searchInput').value;
+        loadAllData(q);
+    }
+
+    // ------------------------------ نمایش دسته‌بندی‌شده ------------------------------
+    const statusOrder = [
+        "ثبت اولیه",
+        "در انتظار شروع انجام",
+        "در حال طراحی",
+        "آماده تحویل",
+        "تکمیل شده"
+    ];
+
+    function renderOrdersCategorized(ordersArray) {
+        const container = document.getElementById('ordersContainer');
         container.innerHTML = '';
 
-        // گروه‌بندی
-        const groups = {};
-        SECTION_TITLES.forEach(title => { groups[title] = []; });
-        source.forEach(order => {
-            const group = getStatusGroup(order.orderStatus);
-            if (groups[group]) groups[group].push(order);
-        });
-
-        // برای هر بخش، فقط تعداد مشخصی را نمایش بده
-        SECTION_TITLES.forEach(title => {
-            const ordersInSection = groups[title] || [];
-            if (ordersInSection.length === 0) return;
-
-            // تعداد مجاز نمایش
-            if (!(title in sectionDisplayCounts)) sectionDisplayCounts[title] = 10;
-            const showCount = sectionDisplayCounts[title];
-            const visibleOrders = ordersInSection.slice(0, showCount);
-            const remaining = ordersInSection.length - showCount;
-
-            // ساخت HTML بخش
-            let sectionHTML = `
-                <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-5">
-                    <h2 class="text-xl font-bold text-indigo-900 mb-4 pb-2 border-b border-indigo-100">
-                        <i class="fas fa-folder-open ml-2 text-indigo-500"></i> ${title}
-                        <span class="text-sm font-normal text-gray-500 mr-2">(${ordersInSection.length} سفارش)</span>
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            `;
-
-            visibleOrders.forEach(order => {
-                sectionHTML += generateOrderCard(order);
-            });
-
-            sectionHTML += `</div>`;
-
-            if (remaining > 0) {
-                sectionHTML += `
-                    <div class="mt-4 text-center">
-                        <button onclick="loadMoreSection('${title}')" 
-                                class="bg-indigo-50 text-indigo-700 px-6 py-2 rounded-lg hover:bg-indigo-100 font-bold shadow-sm">
-                            <i class="fas fa-chevron-down ml-1"></i> نمایش بیشتر (${remaining} سفارش دیگر)
-                        </button>
-                    </div>
-                `;
-            }
-
-            sectionHTML += `</div>`;
-            container.innerHTML += sectionHTML;
-        });
-    }
-
-    // 🆕 بارگذاری بیشتر برای یک بخش
-    function loadMoreSection(sectionTitle) {
-        if (sectionDisplayCounts[sectionTitle]) {
-            sectionDisplayCounts[sectionTitle] += 10;
-        } else {
-            sectionDisplayCounts[sectionTitle] = 10;
+        if (!ordersArray.length) {
+            container.innerHTML = '<p class="col-span-full text-center text-gray-500 font-bold">هیچ سفارشی یافت نشد.</p>';
+            return;
         }
-        renderSections();
+
+        // گروه‌بندی بر اساس وضعیت
+        const groups = {};
+        ordersArray.forEach(order => {
+            const status = order.orderStatus.trim();
+            if (!groups[status]) groups[status] = [];
+            groups[status].push(order);
+        });
+
+        // ایجاد بخش‌ها بر اساس ترتیب مشخص
+        statusOrder.forEach(statusKey => {
+            const orders = groups[statusKey] || [];
+            if (orders.length === 0) return; // بخش‌های خالی نمایش داده نشوند
+
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'status-section bg-white rounded-xl shadow p-4';
+
+            const title = document.createElement('h2');
+            title.className = 'text-xl font-bold text-indigo-900 mb-3 flex items-center';
+            title.innerHTML = `<i class="fas fa-clipboard-list ml-2"></i> ${statusKey} (${orders.length} سفارش)`;
+            sectionDiv.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+            sectionDiv.appendChild(grid);
+
+            // نمایش اولیه ۱۰ عدد
+            const initialCount = 10;
+            let shownCount = Math.min(initialCount, orders.length);
+
+            function renderVisible() {
+                grid.innerHTML = '';
+                for (let i = 0; i < shownCount; i++) {
+                    grid.innerHTML += createOrderCard(orders[i]);
+                }
+                // دکمه "بیشتر" اگر هنوز مواردی باقی مانده
+                if (shownCount < orders.length) {
+                    const moreBtn = document.createElement('button');
+                    moreBtn.className = 'load-more-btn col-span-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded mt-2';
+                    moreBtn.textContent = `نمایش بیشتر (${orders.length - shownCount} سفارش دیگر)`;
+                    moreBtn.onclick = () => {
+                        shownCount = Math.min(shownCount + 10, orders.length);
+                        renderVisible();
+                    };
+                    grid.appendChild(moreBtn);
+                }
+            }
+            renderVisible();
+            container.appendChild(sectionDiv);
+        });
     }
 
-    // 🆕 ساخت کارت یک سفارش (بدون تغییر در دکمه‌ها و عملکرد)
-    function generateOrderCard(order) {
+    function createOrderCard(order) {
         let pendingReceipts = order.receipts ? order.receipts.filter(r => r.status.includes('در انتظار')).length : 0;
         let receiptBadge = pendingReceipts > 0 ? `<span class="absolute -top-3 -right-3 bg-red-500 text-white text-xs px-3 py-1 rounded-full animate-bounce shadow-lg">${pendingReceipts} فیش جدید</span>` : '';
         
         let statClass = order.orderStatus.includes('تکمیل') ? 'bg-green-100 text-green-800' : 'bg-indigo-100 text-indigo-800';
 
-        // 🆕 بررسی دیرکرد (بیش از ۱۰ روز)
-        let overdueClass = '';
-        if (order.regDate) {
-            const reg = new Date(order.regDate);
-            const now = new Date();
-            const diffTime = Math.abs(now - reg);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays > 10) {
-                overdueClass = 'order-overdue';
-            }
+        // اطلاعات کاربر (اختیاری)
+        let userInfoHtml = '';
+        if (order.user) {
+            userInfoHtml = `
+                <div class="text-xs text-gray-600 mt-1 border-t pt-2">
+                    <p><strong>کاربر:</strong> ${order.user.fullName || '---'}</p>
+                    <p><strong>کد ملی:</strong> ${order.user.nationalID || '---'}</p>
+                    <p><strong>تلفن:</strong> ${order.user.phone || '---'}</p>
+                </div>`;
         }
 
         return `
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 relative hover:shadow-lg transition ${overdueClass}">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 relative hover:shadow-lg transition">
                 ${receiptBadge}
                 <div class="flex justify-between items-start border-b pb-3 mb-3">
                     <div>
@@ -389,6 +425,8 @@
                     <div class="bg-gray-50 p-2 rounded border col-span-2"><span class="text-gray-500 block mb-1">قالب:</span><span class="font-bold">${order.template || 'انتخاب نشده'}</span></div>
                 </div>
 
+                ${userInfoHtml}
+
                 <div class="flex flex-wrap gap-2 border-t pt-4">
                     <button onclick="openStatusModal('${order.orderId}')" class="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-yellow-600"><i class="fas fa-edit"></i> ویرایش / تحویل</button>
                     <button onclick="openAdminTickets('${order.orderId}')" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-600"><i class="fas fa-comments"></i> پشتیبانی</button>
@@ -401,26 +439,19 @@
         `;
     }
 
-    function filterOrders() {
-        let q = document.getElementById('searchInput').value.toLowerCase();
-        let filtered = allOrdersData.filter(o => 
-            (o.orderId && o.orderId.toLowerCase().includes(q)) || 
-            (o.siteName && o.siteName.toLowerCase().includes(q)) || 
-            (o.email && o.email.toLowerCase().includes(q))
-        );
-        // ریست تعداد نمایش برای جستجوی جدید
-        sectionDisplayCounts = {};
-        renderSections(filtered);
-    }
-
-    // تولید متن منظم با اصلاح درخواستی
+    // ------------------------------ تولید متن کپی (اصلاح‌شده) ------------------------------
     function generateAndShowText(orderId) {
         const order = allOrdersData.find(o => o.orderId === orderId);
+        if (!order) return;
         const bInfo = extractBioParts(order.bio);
         const contacts = unpackContactForAdmin(order.contactInfo);
         
-        // 🆕 تغییر بخش ابتدایی
-        let text = `درخواست طراحی سایت (${order.siteName || 'بدون نام'})
+        // حذف هدر قبلی
+        let text = `🌍 درخواست طراحی سایت (${order.siteName || 'بدون نام'})
+--------------------------------------
+▪️ کد سفارش: ${order.orderId}
+▪️ نام کاربری (ایمیل): ${order.email}
+▪️ تاریخ ثبت: ${order.regDate || 'نامشخص'}
 
 🌍 [ مشخصات اصلی سایت ]
 --------------------------------------
@@ -445,12 +476,12 @@ ${contacts}
 --------------------------------------
 وضعیت فعلی: ${order.domainStatus || 'ثبت نشده'}
 پیشنهادات کاربر: ${order.proposedDomains || 'ندارد'}
-▪️ کد سفارش: ${order.orderId}
-▪️ نام کاربری (ایمیل): ${order.email}
-▪️ تاریخ ثبت: ${order.regDate || 'نامشخص'}`;
+`;
 
         document.getElementById('formattedDataText').innerText = text;
         document.getElementById('copyDataModal').classList.remove('hidden');
+        // به‌روزرسانی عنوان مودال
+        document.querySelector('#copyDataModal .font-bold').innerText = `درخواست طراحی سایت (${order.siteName || 'بدون نام'})`;
     }
 
     function copyToClipboard() {
@@ -460,7 +491,7 @@ ${contacts}
         });
     }
 
-    // ویرایش وضعیت سفارش
+    // ------------------------------ ویرایش وضعیت سفارش ------------------------------
     function openStatusModal(orderId) {
         currentOrderId = orderId;
         const order = allOrdersData.find(o => o.orderId === orderId);
@@ -501,7 +532,7 @@ ${contacts}
         });
     }
 
-    // رسیدها با نمایش تصویر
+    // ------------------------------ فیش‌ها (با نمایش Base64) ------------------------------
     function openReceiptsModal(orderId) {
         const order = allOrdersData.find(o => o.orderId === orderId);
         const container = document.getElementById('receiptsContainer');
@@ -511,38 +542,67 @@ ${contacts}
             container.innerHTML = '<p class="text-center text-gray-500 font-bold py-6">هیچ فیش دستی برای این سفارش ارسال نشده است.</p>';
         } else {
             order.receipts.forEach(r => {
-                let badgeClass = r.status.includes('تایید') ? 'bg-green-100 text-green-800' : (r.status.includes('رد') ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800 animate-pulse');
-                
-                // 🆕 استخراج شناسه فایل برای تصویر
+                // r.link شامل لینک مستقیم یا شناسه فایل است. ما شناسه را از لینک استخراج می‌کنیم.
                 let fileId = null;
-                if (r.link && r.link.includes('/d/')) {
-                    const parts = r.link.split('/d/');
-                    if (parts.length > 1) {
-                        fileId = parts[1].split('/')[0].split('?')[0];
-                    }
+                if (r.link && r.link.includes('/file/d/')) {
+                    fileId = r.link.split('/file/d/')[1].split('/')[0];
+                } else if (r.link && r.link.includes('id=')) {
+                    fileId = r.link.split('id=')[1];
+                } else {
+                    fileId = r.link; // ممکن است خود شناسه باشد
                 }
-                const thumbnailUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000` : null;
 
-                container.innerHTML += `
-                    <div class="border rounded-lg p-5 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div class="flex-1">
-                            <p class="font-bold text-gray-800">پرداخت قسط مرحله: <span class="bg-indigo-100 px-2 py-1 rounded text-indigo-800">${r.stage}</span></p>
-                            <p class="text-sm text-gray-600 mt-2">مبلغ: <strong>${r.amount}</strong> | زمان: <span dir="ltr">${r.date}</span></p>
-                            <span class="text-xs px-2 py-1 rounded mt-2 inline-block font-bold ${badgeClass}">${r.status}</span>
-                            ${thumbnailUrl ? `<div class="mt-3 max-w-xs"><img src="${thumbnailUrl}" alt="فیش پرداخت" class="w-full h-auto rounded shadow border" onerror="this.style.display='none'"></div>` : ''}
+                let badgeClass = r.status.includes('تایید') ? 'bg-green-100 text-green-800' : (r.status.includes('رد') ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800 animate-pulse');
+                let receiptDiv = document.createElement('div');
+                receiptDiv.className = 'border rounded-lg p-5 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4';
+                receiptDiv.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-800">پرداخت قسط مرحله: <span class="bg-indigo-100 px-2 py-1 rounded text-indigo-800">${r.stage}</span></p>
+                        <p class="text-sm text-gray-600 mt-2">مبلغ: <strong>${r.amount}</strong> | زمان: <span dir="ltr">${r.date}</span></p>
+                        <span class="text-xs px-2 py-1 rounded mt-2 inline-block font-bold ${badgeClass}">${r.status}</span>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <div class="receipt-image-container" data-fileid="${fileId}">
+                            <span class="text-gray-400">در حال بارگذاری تصویر...</span>
                         </div>
-                        <div class="flex gap-2 w-full md:w-auto">
-                            <a href="${r.link}" target="_blank" class="flex-1 md:flex-none text-center bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 shadow"><i class="fas fa-eye"></i> مشاهده فیش</a>
-                            ${r.status.includes('در انتظار') ? `
-                                <button onclick="handleReceiptAdmin('${orderId}', ${r.rowIdx}, 'تایید شده', ${r.stage})" class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 shadow" title="تایید پرداخت"><i class="fas fa-check"></i></button>
-                                <button onclick="handleReceiptAdmin('${orderId}', ${r.rowIdx}, 'رد شده', ${r.stage})" class="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 shadow" title="رد پرداخت"><i class="fas fa-times"></i></button>
-                            ` : ''}
-                        </div>
+                        ${r.status.includes('در انتظار') ? `
+                            <button onclick="handleReceiptAdmin('${orderId}', ${r.rowIdx}, 'تایید شده', ${r.stage})" class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 shadow" title="تایید پرداخت"><i class="fas fa-check"></i></button>
+                            <button onclick="handleReceiptAdmin('${orderId}', ${r.rowIdx}, 'رد شده', ${r.stage})" class="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 shadow" title="رد پرداخت"><i class="fas fa-times"></i></button>
+                        ` : ''}
                     </div>
                 `;
+                container.appendChild(receiptDiv);
+
+                // بارگذاری تصویر از سرور (Base64)
+                if (fileId) {
+                    loadImageBase64(fileId, (base64) => {
+                        const imgContainer = receiptDiv.querySelector('.receipt-image-container');
+                        if (imgContainer) {
+                            imgContainer.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-w-xs max-h-32 rounded shadow" alt="فیش">`;
+                        }
+                    });
+                }
             });
         }
         document.getElementById('receiptsModal').classList.remove('hidden');
+    }
+
+    // تابع کمکی برای دریافت تصویر Base64 از سرور
+    function loadImageBase64(fileId, callback) {
+        fetch(GAS_URL, {
+            method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+            body: JSON.stringify({action: "get_image_base64", fileId: fileId})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                callback(data.base64);
+            } else {
+                console.error('Error loading image:', data.message);
+                callback(null);
+            }
+        })
+        .catch(() => callback(null));
     }
 
     function handleReceiptAdmin(orderId, rowIdx, newStatus, stage) {
@@ -555,7 +615,7 @@ ${contacts}
         });
     }
 
-    // گالری با پشتیبانی از base64
+    // ------------------------------ گالری تصاویر (Base64) ------------------------------
     function openAdminImages(orderId) {
         const order = allOrdersData.find(o => o.orderId === orderId);
         const gallery = document.getElementById('adminImagesGallery');
@@ -564,26 +624,27 @@ ${contacts}
             gallery.innerHTML = '<p class="col-span-full text-center text-gray-500 font-bold py-6">تصویری آپلود نشده است.</p>';
         } else {
             order.images.forEach(img => {
-                // 🆕 اگر base64 موجود باشد از آن استفاده کن، در غیر این صورت thumbnail
-                let srcAttr = '';
-                if (img.base64) {
-                    srcAttr = `data:image/png;base64,${img.base64}`;
-                } else if (img.url) {
-                    srcAttr = img.url;
-                }
-                gallery.innerHTML += `
-                    <div class="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition bg-white p-2">
-                        <a href="https://drive.google.com/file/d/${img.id}/view" target="_blank" class="block h-32 bg-gray-100 flex items-center justify-center overflow-hidden rounded">
-                            ${srcAttr ? `<img src="${srcAttr}" class="max-h-full max-w-full object-cover" title="کلیک برای نمایش بزرگ">` : '<span class="text-gray-400 text-xs">بدون تصویر</span>'}
-                        </a>
-                        <p class="text-xs mt-2 text-center text-gray-800 font-bold truncate" title="${img.desc}">${img.desc}</p>
-                    </div>`;
+                let imgDiv = document.createElement('div');
+                imgDiv.className = 'border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition bg-white p-2';
+                imgDiv.innerHTML = `
+                    <div class="image-gallery-container h-32 bg-gray-100 flex items-center justify-center rounded" data-fileid="${img.id}">
+                        <span class="text-gray-400">در حال بارگذاری...</span>
+                    </div>
+                    <p class="text-xs mt-2 text-center text-gray-800 font-bold truncate" title="${img.desc}">${img.desc}</p>
+                `;
+                gallery.appendChild(imgDiv);
+                loadImageBase64(img.id, (base64) => {
+                    const container = imgDiv.querySelector('.image-gallery-container');
+                    if (container && base64) {
+                        container.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-h-full max-w-full object-cover" alt="${img.desc}">`;
+                    }
+                });
             });
         }
         document.getElementById('adminImagesModal').classList.remove('hidden');
     }
 
-    // تیکت‌ها
+    // ------------------------------ تیکت‌ها ------------------------------
     function openAdminTickets(orderId) {
         currentOrderId = orderId;
         const box = document.getElementById('adminChatBox');
@@ -614,7 +675,7 @@ ${contacts}
         }).then(r=>r.json()).then(d=>{
             if(d.status==='success') {
                 document.getElementById('adminNewMsg').value = '';
-                loadAllData();
+                loadAllData(); // رفرش خودکار
                 setTimeout(()=>openAdminTickets(currentOrderId), 1500);
             }
         });
