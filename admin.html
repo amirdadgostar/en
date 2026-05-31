@@ -83,9 +83,24 @@
             color: #2ecc71;
             font-size: 1.2rem;
         }
+        /* Image preview modal */
+        .image-preview-container img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body class="text-gray-800">
+
+<!-- لودینگ اولیه هنگام بررسی نشست -->
+<div id="initialLoading" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+    <div class="text-center">
+        <div class="spinner mx-auto" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        <p class="text-white mt-4 font-bold">در حال احراز هویت...</p>
+    </div>
+</div>
 
 <script>
     // لینک دیپلوی شده اسکریپت خود را اینجا قرار دهید:
@@ -93,7 +108,7 @@
 </script>
 
 <!-- فرم لاگین ادمین -->
-<div id="adminAuthSection" class="min-h-screen flex items-center justify-center bg-gray-900">
+<div id="adminAuthSection" class="min-h-screen flex items-center justify-center bg-gray-900 hidden">
     <div class="bg-white p-8 rounded-2xl shadow-2xl w-96 border-t-8 border-indigo-600">
         <h2 class="text-2xl font-bold text-center mb-6 text-indigo-900"><i class="fas fa-user-shield text-indigo-600"></i> پنل مدیریت ToWeb</h2>
         <input type="text" id="adminUser" placeholder="نام کاربری (موجود در تب Admin)" class="w-full mb-4 p-3 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none" dir="ltr">
@@ -111,6 +126,7 @@
         </div>
         <div class="flex gap-4 items-center text-sm">
             <button onclick="openCreateUserModal()" class="bg-green-500 hover:bg-green-400 px-4 py-2 rounded-xl transition font-bold shadow"><i class="fas fa-user-plus ml-1"></i> ایجاد کاربر جدید</button>
+            <button onclick="freeUpSpace()" class="bg-orange-500 hover:bg-orange-400 px-4 py-2 rounded-xl transition font-bold shadow"><i class="fas fa-broom ml-1"></i> آزادسازی فضا</button>
             <button onclick="logoutAdmin()" class="text-red-300 hover:text-red-200 font-bold"><i class="fas fa-sign-out-alt ml-1"></i> خروج</button>
         </div>
     </nav>
@@ -230,7 +246,7 @@
     </div>
 </div>
 
-<!-- مودال ثبت دلیل رد فیش (جدید) -->
+<!-- مودال ثبت دلیل رد فیش -->
 <div id="rejectReasonModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
     <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative border-t-4 border-red-500">
         <button onclick="closeModal('rejectReasonModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500 transition">
@@ -270,27 +286,47 @@
     </div>
 </div>
 
+<!-- مودال پیش‌نمایش تصویر بزرگ -->
+<div id="imagePreviewModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" onclick="closeModal('imagePreviewModal')">
+    <div class="relative image-preview-container" onclick="event.stopPropagation()">
+        <button onclick="closeModal('imagePreviewModal')" class="absolute -top-4 -left-4 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg text-gray-600 hover:text-red-500 transition z-10">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        <img id="previewImage" src="" alt="پیش‌نمایش تصویر" class="max-w-[90vw] max-h-[85vh] rounded-xl shadow-2xl">
+    </div>
+</div>
+
 <script>
     // متغیرهای سراسری
     let allOrdersData = [];
     let currentOrderId = null;
     let adminToken = null;
 
-    // متغیرهای مربوط به رد فیش (جدید)
+    // متغیرهای مربوط به رد فیش
     let pendingRejectOrderId = null;
     let pendingRejectRowIdx = null;
     let pendingRejectStage = null;
 
+    // کش برای کاهش درخواست‌های تکراری
+    let ticketsCache = {};
+    let imagesCache = {};
+
     // ------------------------------ مدیریت نشست (Token) ------------------------------
     function checkSavedSession() {
         const token = sessionStorage.getItem('adminToken');
-        if (!token) return;
+        if (!token) {
+            // بدون توکن: مخفی کردن لودینگ و نمایش فرم لاگین
+            document.getElementById('initialLoading').classList.add('hidden');
+            document.getElementById('adminAuthSection').classList.remove('hidden');
+            return;
+        }
         fetch(GAS_URL, {
             method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
             body: JSON.stringify({action: "verify_token", token: token})
         })
         .then(res => res.json())
         .then(data => {
+            document.getElementById('initialLoading').classList.add('hidden');
             if (data.status === 'success') {
                 adminToken = token;
                 document.getElementById('adminAuthSection').classList.add('hidden');
@@ -298,9 +334,14 @@
                 loadAllData();
             } else {
                 sessionStorage.removeItem('adminToken');
+                document.getElementById('adminAuthSection').classList.remove('hidden');
             }
         })
-        .catch(() => sessionStorage.removeItem('adminToken'));
+        .catch(() => {
+            document.getElementById('initialLoading').classList.add('hidden');
+            sessionStorage.removeItem('adminToken');
+            document.getElementById('adminAuthSection').classList.remove('hidden');
+        });
     }
 
     window.addEventListener('load', checkSavedSession);
@@ -414,11 +455,46 @@
         });
     }
 
+    // ------------------------------ آزادسازی فضای تصاویر قدیمی ------------------------------
+    function freeUpSpace() {
+        Swal.fire({
+            title: 'آزادسازی فضای ذخیره‌سازی',
+            text: 'این عملیات تمام تصاویر و فیش‌های مربوط به پروژه‌های تکمیل شده (بیش از ۲۹ روز از تکمیل) را حذف می‌کند. ادامه می‌دهید؟',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'بله، حذف کن',
+            cancelButtonText: 'انصراف'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({title:'در حال پاکسازی...', didOpen:()=>Swal.showLoading()});
+                fetch(GAS_URL, {
+                    method: "POST",
+                    headers: {"Content-Type": "text/plain;charset=utf-8"},
+                    body: JSON.stringify({action: "admin_cleanup_old_images"})
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if(d.status === 'success') {
+                        Swal.fire('موفق', d.message, 'success');
+                        loadAllData(); // رفرش لیست
+                    } else {
+                        Swal.fire('خطا', d.message, 'error');
+                    }
+                })
+                .catch(() => Swal.fire('خطا', 'مشکل در ارتباط با سرور', 'error'));
+            }
+        });
+    }
+
     // ------------------------------ لود داده‌ها با جستجوی سمت سرور ------------------------------
     function loadAllData(searchQuery = '') {
         const container = document.getElementById('ordersContainer');
         container.innerHTML = `<div class="skeleton-box h-32 w-full mb-4"></div><div class="skeleton-box h-32 w-full"></div>`;
         
+        // پاک کردن کش‌ها هنگام رفرش کلی
+        ticketsCache = {};
+        imagesCache = {};
+
         const body = {action: "admin_get_all_data"};
         if (searchQuery.trim()) body.search = searchQuery.trim();
 
@@ -706,7 +782,7 @@ ${contacts}
                         <span class="text-xs px-2 py-1 rounded mt-2 inline-block font-bold ${badgeClass}">${r.status}</span>
                     </div>
                     <div class="flex gap-2 items-center">
-                        <div class="receipt-image-container" data-fileid="${fileId}">
+                        <div class="receipt-image-container cursor-pointer" data-fileid="${fileId}">
                             <span class="text-gray-400">در حال بارگذاری تصویر...</span>
                         </div>
                         ${r.status.includes('در انتظار') ? `
@@ -721,7 +797,12 @@ ${contacts}
                     loadImageBase64(fileId, (base64) => {
                         const imgContainer = receiptDiv.querySelector('.receipt-image-container');
                         if (imgContainer) {
-                            imgContainer.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-w-xs max-h-32 rounded-lg shadow" alt="فیش">`;
+                            imgContainer.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-w-xs max-h-32 rounded-lg shadow cursor-pointer" alt="فیش">`;
+                            // اضافه کردن رویداد کلیک برای پیش‌نمایش
+                            imgContainer.onclick = (e) => {
+                                e.stopPropagation();
+                                showImagePreview(base64);
+                            };
                         }
                     });
                 }
@@ -747,7 +828,13 @@ ${contacts}
         .catch(() => callback(null));
     }
 
-    // ------------------------------ توابع رد فیش با دلیل (جدید) ------------------------------
+    // پیش‌نمایش تصویر بزرگ
+    function showImagePreview(base64) {
+        document.getElementById('previewImage').src = 'data:image/png;base64,' + base64;
+        document.getElementById('imagePreviewModal').classList.remove('hidden');
+    }
+
+    // ------------------------------ توابع رد فیش با دلیل ------------------------------
     function showRejectReasonModal(orderId, rowIdx, stage) {
         pendingRejectOrderId = orderId;
         pendingRejectRowIdx = rowIdx;
@@ -814,7 +901,7 @@ ${contacts}
         });
     }
 
-    // تابع تأیید فیش (بدون تغییر، فقط اینجا برای ارجاع)
+    // تابع تأیید فیش (بدون تغییر)
     function handleReceiptAdmin(orderId, rowIdx, newStatus, stage) {
         Swal.fire({title:'درحال اعمال...', didOpen:()=>Swal.showLoading()});
         fetch(GAS_URL, {
@@ -825,37 +912,81 @@ ${contacts}
         });
     }
 
-    // ------------------------------ گالری تصاویر (Base64) ------------------------------
+    // ------------------------------ گالری تصاویر (با کش و پیش‌نمایش) ------------------------------
     function openAdminImages(orderId) {
-        const order = allOrdersData.find(o => o.orderId === orderId);
         const gallery = document.getElementById('adminImagesGallery');
         gallery.innerHTML = '';
+        
+        const order = allOrdersData.find(o => o.orderId === orderId);
         if(!order.images || order.images.length === 0) {
             gallery.innerHTML = '<p class="col-span-full text-center text-gray-500 font-bold py-6">تصویری آپلود نشده است.</p>';
         } else {
-            order.images.forEach(img => {
-                let imgDiv = document.createElement('div');
-                imgDiv.className = 'border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition bg-white p-2';
-                imgDiv.innerHTML = `
-                    <div class="image-gallery-container h-32 bg-gray-100 flex items-center justify-center rounded-lg" data-fileid="${img.id}">
-                        <span class="text-gray-400">در حال بارگذاری...</span>
-                    </div>
-                    <p class="text-xs mt-2 text-center text-gray-800 font-bold truncate" title="${img.desc}">${img.desc}</p>
-                `;
-                gallery.appendChild(imgDiv);
-                loadImageBase64(img.id, (base64) => {
-                    const container = imgDiv.querySelector('.image-gallery-container');
-                    if (container && base64) {
-                        container.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-h-full max-w-full object-cover" alt="${img.desc}">`;
-                    }
+            // بررسی کش
+            if (imagesCache[orderId]) {
+                renderCachedImages(orderId, gallery);
+            } else {
+                // بارگذاری تمام تصاویر و کش کردن
+                let loadedCount = 0;
+                const total = order.images.length;
+                const cached = [];
+                order.images.forEach((img, index) => {
+                    let imgDiv = document.createElement('div');
+                    imgDiv.className = 'border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition bg-white p-2';
+                    imgDiv.innerHTML = `
+                        <div class="image-gallery-container h-32 bg-gray-100 flex items-center justify-center rounded-lg" data-fileid="${img.id}">
+                            <span class="text-gray-400">در حال بارگذاری...</span>
+                        </div>
+                        <p class="text-xs mt-2 text-center text-gray-800 font-bold truncate" title="${img.desc}">${img.desc}</p>
+                    `;
+                    gallery.appendChild(imgDiv);
+                    
+                    loadImageBase64(img.id, (base64) => {
+                        const container = imgDiv.querySelector('.image-gallery-container');
+                        if (container && base64) {
+                            container.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-h-full max-w-full object-cover cursor-pointer" alt="${img.desc}">`;
+                            container.onclick = (e) => {
+                                e.stopPropagation();
+                                showImagePreview(base64);
+                            };
+                        }
+                        cached.push({id: img.id, desc: img.desc, base64: base64});
+                        loadedCount++;
+                        if (loadedCount === total) {
+                            imagesCache[orderId] = cached; // کش تصاویر کامل
+                        }
+                    });
                 });
-            });
+            }
         }
         document.getElementById('adminImagesModal').classList.remove('hidden');
     }
 
-    // ------------------------------ تیکت‌ها (بهبود یافته با spinner) ------------------------------
-    function refreshTickets(orderId) {
+    function renderCachedImages(orderId, gallery) {
+        const cached = imagesCache[orderId];
+        gallery.innerHTML = '';
+        cached.forEach(img => {
+            let imgDiv = document.createElement('div');
+            imgDiv.className = 'border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition bg-white p-2';
+            imgDiv.innerHTML = `
+                <div class="image-gallery-container h-32 bg-gray-100 flex items-center justify-center rounded-lg cursor-pointer">
+                    <img src="data:image/png;base64,${img.base64}" class="max-h-full max-w-full object-cover" alt="${img.desc}">
+                </div>
+                <p class="text-xs mt-2 text-center text-gray-800 font-bold truncate" title="${img.desc}">${img.desc}</p>
+            `;
+            imgDiv.querySelector('.image-gallery-container').onclick = (e) => {
+                e.stopPropagation();
+                showImagePreview(img.base64);
+            };
+            gallery.appendChild(imgDiv);
+        });
+    }
+
+    // ------------------------------ تیکت‌ها (کش و بهبود) ------------------------------
+    function refreshTickets(orderId, force = false) {
+        if (!force && ticketsCache[orderId]) {
+            renderTicketsFromCache(orderId);
+            return;
+        }
         fetch(GAS_URL, {
             method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
             body: JSON.stringify({action: "admin_get_tickets", orderId: orderId})
@@ -863,27 +994,35 @@ ${contacts}
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                const box = document.getElementById('adminChatBox');
-                box.innerHTML = '';
-                if (data.tickets && data.tickets.length > 0) {
-                    data.tickets.forEach(t => {
-                        let isAdmin = t.sender === "پشتیبانی ToWeb";
-                        box.innerHTML += `
-                            <div class="chat-bubble shadow-sm ${isAdmin ? 'chat-admin' : 'chat-user'}">
-                                <div class="text-xs opacity-70 mb-1 border-b pb-1 font-bold">${t.sender} <span class="font-normal text-[10px] mx-2">${t.date}</span></div>
-                                <div class="leading-relaxed mt-1">${t.message}</div>
-                            </div>`;
-                    });
-                } else {
-                    box.innerHTML = '<p class="text-center text-gray-400 mt-10 font-bold">هنوز پیامی رد و بدل نشده است.</p>';
-                }
-                box.scrollTop = box.scrollHeight;
+                ticketsCache[orderId] = data.tickets;
+                renderTicketsFromCache(orderId);
             }
         });
     }
 
+    function renderTicketsFromCache(orderId) {
+        const box = document.getElementById('adminChatBox');
+        const tickets = ticketsCache[orderId] || [];
+        box.innerHTML = '';
+        if (tickets.length > 0) {
+            tickets.forEach(t => {
+                let isAdmin = t.sender === "پشتیبانی ToWeb";
+                box.innerHTML += `
+                    <div class="chat-bubble shadow-sm ${isAdmin ? 'chat-admin' : 'chat-user'}">
+                        <div class="text-xs opacity-70 mb-1 border-b pb-1 font-bold">${t.sender} <span class="font-normal text-[10px] mx-2">${t.date}</span></div>
+                        <div class="leading-relaxed mt-1">${t.message}</div>
+                    </div>`;
+            });
+        } else {
+            box.innerHTML = '<p class="text-center text-gray-400 mt-10 font-bold">هنوز پیامی رد و بدل نشده است.</p>';
+        }
+        box.scrollTop = box.scrollHeight;
+    }
+
     function openAdminTickets(orderId) {
         currentOrderId = orderId;
+        // بلافاصله چت‌باکس را خالی و لودینگ نشان بده
+        document.getElementById('adminChatBox').innerHTML = '<div class="text-center mt-10"><div class="spinner mx-auto"></div><p class="text-gray-400 mt-2">در حال بارگذاری پیام‌ها...</p></div>';
         refreshTickets(orderId);
         document.getElementById('adminTicketsModal').classList.remove('hidden');
     }
@@ -891,6 +1030,9 @@ ${contacts}
     function adminSendTicket() {
         const msg = document.getElementById('adminNewMsg').value.trim();
         if(!msg) return;
+
+        // پاک کردن فیلد بلافاصله
+        document.getElementById('adminNewMsg').value = '';
 
         const chatBox = document.getElementById('adminChatBox');
         const tempMsgId = 'temp-' + Date.now();
@@ -911,6 +1053,11 @@ ${contacts}
             method: "POST", body: JSON.stringify({action: "admin_reply_ticket", orderId: currentOrderId, message: msg})
         }).then(r=>r.json()).then(d=>{
             if(d.status==='success') {
+                // به‌روزرسانی کش
+                if (ticketsCache[currentOrderId]) {
+                    ticketsCache[currentOrderId].push({ sender: "پشتیبانی ToWeb", message: msg, date: "همین الان" });
+                }
+                // جایگزینی spinner با تیک
                 const bubble = document.getElementById(tempMsgId);
                 if (bubble) {
                     bubble.querySelector('.spinner')?.remove();
@@ -919,8 +1066,8 @@ ${contacts}
                         msgSpan.insertAdjacentHTML('afterend', ' <i class="fas fa-check checkmark"></i>');
                     }
                 }
-                document.getElementById('adminNewMsg').value = '';
-                refreshTickets(currentOrderId);
+                // رفرش کش
+                refreshTickets(currentOrderId, true);
             } else {
                 const bubble = document.getElementById(tempMsgId);
                 if (bubble) {
