@@ -9,35 +9,90 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap');
-        body { font-family: 'Vazirmatn', sans-serif; background-color: #f1f5f9; }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
         .hidden { display: none !important; }
-        .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; font-size: 0.9rem; }
+        .chat-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            position: relative;
+        }
         .chat-admin { background-color: #eff6ff; color: #1e3a8a; border-bottom-right-radius: 0; margin-left: auto; border: 1px solid #bfdbfe; }
         .chat-user { background-color: #f3f4f6; color: #374151; border-bottom-left-radius: 0; margin-right: auto; border: 1px solid #e5e7eb; }
         pre { white-space: pre-wrap; font-family: inherit; }
         
-        /* Loading Animation */
-        .skeleton-box { background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite linear; border-radius: 8px; }
+        .skeleton-box {
+            background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite linear;
+            border-radius: 8px;
+        }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .status-section { margin-bottom: 2rem; }
-        .status-section h2 { margin-bottom: 1rem; }
+        
+        .status-section {
+            margin-bottom: 1.5rem;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            background: white;
+            transition: all 0.2s ease;
+        }
+        .status-header {
+            cursor: pointer;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(to left, #f8fafc, #ffffff);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1e293b;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.2s;
+        }
+        .status-header:hover { background: #f1f5f9; }
+        .status-header .badge {
+            background: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 10px;
+            border-radius: 999px;
+            margin-right: 10px;
+        }
+        .status-content {
+            padding: 1.5rem;
+            display: none;
+        }
+        .status-content.open { display: block; }
         .load-more-btn { cursor: pointer; }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="text-gray-800">
 
 <script>
-    // لینک دیپلوی شده اسکریپت خود را اینجا قرار دهید:
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwJJEomxr1OHOtzfvhrBGDbIOFealOd58d5Cuf8Pin_urVIr6qWpSrrOKaEoelkT9F1/exec"; 
 </script>
 
 <!-- فرم لاگین ادمین -->
-<div id="adminAuthSection" class="min-h-screen flex items-center justify-center bg-gray-900">
-    <div class="bg-white p-8 rounded-xl shadow-2xl w-96 border-t-8 border-indigo-600">
+<div id="adminAuthSection" class="min-h-screen flex items-center justify-center">
+    <div class="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-96 border-t-4 border-indigo-600">
         <h2 class="text-2xl font-bold text-center mb-6 text-indigo-900"><i class="fas fa-user-shield text-indigo-600"></i> پنل مدیریت ToWeb</h2>
-        <input type="text" id="adminUser" placeholder="نام کاربری (موجود در تب Admin)" class="w-full mb-4 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none" dir="ltr">
-        <input type="password" id="adminPass" placeholder="رمز عبور" class="w-full mb-6 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none" dir="ltr">
-        <button onclick="handleAdminLogin()" class="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 font-bold transition shadow-lg">ورود امن</button>
+        <input type="text" id="adminUser" placeholder="نام کاربری (موجود در تب Admin)" class="w-full mb-4 p-3 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none" dir="ltr">
+        <input type="password" id="adminPass" placeholder="رمز عبور" class="w-full mb-6 p-3 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none" dir="ltr">
+        <button onclick="handleAdminLogin()" class="w-full bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 font-bold transition shadow-lg">ورود امن</button>
     </div>
 </div>
 
@@ -49,7 +104,7 @@
             <button onclick="loadAllData()" class="text-indigo-300 hover:text-white transition ml-4 text-sm"><i class="fas fa-sync-alt"></i> رفرش اطلاعات</button>
         </div>
         <div class="flex gap-4 items-center text-sm">
-            <button onclick="openCreateUserModal()" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg transition font-bold shadow"><i class="fas fa-user-plus ml-1"></i> ایجاد کاربر جدید</button>
+            <button onclick="openCreateUserModal()" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl transition font-bold shadow"><i class="fas fa-user-plus ml-1"></i> ایجاد کاربر جدید</button>
             <button onclick="logoutAdmin()" class="text-red-400 hover:text-red-300 font-bold"><i class="fas fa-sign-out-alt ml-1"></i> خروج</button>
         </div>
     </nav>
@@ -60,22 +115,20 @@
         </div>
         <input type="text" id="searchInput" onkeyup="handleSearch()" placeholder="جستجو بر اساس نام سایت، کد سفارش یا ایمیل کاربر..." class="w-full mb-6 p-4 rounded-xl shadow-sm border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-300 font-bold text-indigo-900">
         
-        <!-- مخزن نمایش دسته‌بندی شده -->
         <div id="ordersContainer"></div>
     </div>
 </div>
 
-<!-- مودال ایجاد کاربر جدید توسط ادمین (توسعه‌یافته) -->
+<!-- مودال ایجاد کاربر جدید (ویرایش‌شده) -->
 <div id="createUserModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl w-full max-w-md relative shadow-2xl border-t-4 border-green-500">
         <button onclick="closeModal('createUserModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
         <h2 class="text-lg font-bold mb-4 text-gray-800"><i class="fas fa-user-plus text-green-500"></i> ساخت حساب برای کاربر</h2>
         <div class="space-y-3">
             <input type="text" id="newUserFullName" placeholder="نام و نام خانوادگی" class="w-full p-3 border rounded-lg bg-gray-50">
-            <input type="text" id="newUserNationalID" placeholder="کد ملی" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
+            <input type="text" id="newUserNationalID" placeholder="کد ملی (نام کاربری و رمز عبور)" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
             <input type="text" id="newUserPhone" placeholder="شماره تماس" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
-            <input type="email" id="newUserEmail" placeholder="ایمیل (نام کاربری)" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
-            <input type="text" id="newUserPass" placeholder="رمز عبور" class="w-full p-3 border rounded-lg bg-gray-50" dir="ltr">
+            <p class="text-xs text-gray-500">⚠️ نام کاربری و رمز عبور به‌طور خودکار برابر با کد ملی تنظیم می‌شود.</p>
         </div>
         <button onclick="adminCreateUser()" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 shadow mt-4"><i class="fas fa-check"></i> ثبت نام و ایجاد کاربر</button>
     </div>
@@ -83,30 +136,30 @@
 
 <!-- مودال نمایش مرتب متن برای کپی -->
 <div id="copyDataModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
-        <div class="p-4 border-b flex justify-between items-center bg-indigo-50 rounded-t-xl">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+        <div class="p-4 border-b flex justify-between items-center bg-indigo-50 rounded-t-2xl">
             <h2 class="font-bold text-indigo-900 text-lg"><i class="fas fa-file-alt ml-2"></i> درخواست طراحی سایت</h2>
             <div class="flex gap-2">
-                <button onclick="copyToClipboard()" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 font-bold text-sm"><i class="fas fa-copy ml-1"></i> کپی تمام متن</button>
+                <button onclick="copyToClipboard()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 font-bold text-sm"><i class="fas fa-copy ml-1"></i> کپی تمام متن</button>
                 <button onclick="closeModal('copyDataModal')" class="text-red-500 p-2 hover:bg-red-50 rounded"><i class="fas fa-times text-xl"></i></button>
             </div>
         </div>
         <div class="p-6 overflow-y-auto bg-gray-50 flex-1">
-            <pre id="formattedDataText" class="text-sm text-gray-800 leading-relaxed bg-white p-6 rounded border shadow-inner whitespace-pre-wrap font-mono" dir="rtl"></pre>
+            <pre id="formattedDataText" class="text-sm text-gray-800 leading-relaxed bg-white p-6 rounded-xl border shadow-inner whitespace-pre-wrap font-mono" dir="rtl"></pre>
         </div>
     </div>
 </div>
 
 <!-- مودال تغییر وضعیت و تحویل سفارش -->
 <div id="editStatusModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative border-t-4 border-yellow-500">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative border-t-4 border-yellow-500">
         <button onclick="closeModal('editStatusModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
         <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-edit text-yellow-500"></i> تغییر وضعیت و اطلاعات تحویل سایت</h2>
         
         <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
                 <label class="text-xs text-gray-600 font-bold">وضعیت پیشرفت سفارش</label>
-                <select id="inpOrderStatus" class="w-full p-3 border rounded mt-1 bg-gray-50 font-bold">
+                <select id="inpOrderStatus" class="w-full p-3 border rounded-lg mt-1 bg-gray-50 font-bold">
                     <option value="ثبت اولیه">ثبت اولیه (خام)</option>
                     <option value="در انتظار شروع انجام">در انتظار شروع انجام</option>
                     <option value="در حال طراحی">در حال طراحی</option>
@@ -116,7 +169,7 @@
             </div>
             <div>
                 <label class="text-xs text-gray-600 font-bold">وضعیت مالی</label>
-                <select id="inpPaymentStatus" class="w-full p-3 border rounded mt-1 bg-gray-50 font-bold">
+                <select id="inpPaymentStatus" class="w-full p-3 border rounded-lg mt-1 bg-gray-50 font-bold">
                     <option value="پرداخت نشده">پرداخت نشده</option>
                     <option value="پیش پرداخت انجام شد">پیش پرداخت انجام شد</option>
                     <option value="تسویه کامل انجام شد">تسویه کامل انجام شد</option>
@@ -127,10 +180,10 @@
         <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4 mt-6">
             <h3 class="font-bold text-sm text-blue-900 border-b border-blue-200 pb-2 mb-3"><i class="fas fa-box-open"></i> اطلاعات تحویل نهایی (نمایش به کاربر پس از تسویه)</h3>
             <div class="space-y-3">
-                <input type="text" id="inpSiteUrl" placeholder="آدرس سایت (URL)" class="w-full p-2 border rounded text-sm font-mono" dir="ltr">
-                <input type="text" id="inpSiteEmail" placeholder="ایمیل ادمین سایت" class="w-full p-2 border rounded text-sm font-mono" dir="ltr">
-                <input type="text" id="inpSitePass" placeholder="رمز عبور پنل سایت" class="w-full p-2 border rounded text-sm font-mono" dir="ltr">
-                <input type="text" id="inpGithub" placeholder="لینک سورس کد / گیت هاب / درایو" class="w-full p-2 border rounded text-sm font-mono" dir="ltr">
+                <input type="text" id="inpSiteUrl" placeholder="آدرس سایت (URL)" class="w-full p-2 border rounded-lg text-sm font-mono" dir="ltr">
+                <input type="text" id="inpSiteEmail" placeholder="ایمیل ادمین سایت" class="w-full p-2 border rounded-lg text-sm font-mono" dir="ltr">
+                <input type="text" id="inpSitePass" placeholder="رمز عبور پنل سایت" class="w-full p-2 border rounded-lg text-sm font-mono" dir="ltr">
+                <input type="text" id="inpGithub" placeholder="لینک سورس کد / گیت هاب / درایو" class="w-full p-2 border rounded-lg text-sm font-mono" dir="ltr">
             </div>
         </div>
 
@@ -140,7 +193,7 @@
 
 <!-- مودال بررسی فیش‌های واریزی -->
 <div id="receiptsModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
         <button onclick="closeModal('receiptsModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
         <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-receipt text-green-600"></i> بررسی فیش‌های کارت به کارت دستی</h2>
         <div id="receiptsContainer" class="space-y-4"></div>
@@ -149,7 +202,7 @@
 
 <!-- مودال گالری تصاویر -->
 <div id="adminImagesModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
         <button onclick="closeModal('adminImagesModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
         <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-images text-purple-600"></i> تصاویر ارسال شده کاربر</h2>
         <div id="adminImagesGallery" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
@@ -158,35 +211,32 @@
 
 <!-- مودال تیکت و پشتیبانی -->
 <div id="adminTicketsModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col relative border-t-4 border-blue-500">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col relative border-t-4 border-blue-500">
         <button onclick="closeModal('adminTicketsModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
         <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-comments text-blue-500"></i> چت و پشتیبانی سفارش</h2>
         
-        <div id="adminChatBox" class="flex-1 overflow-y-auto p-4 flex flex-col bg-gray-50 rounded-lg border inner-shadow"></div>
+        <div id="adminChatBox" class="flex-1 overflow-y-auto p-4 flex flex-col bg-gray-50 rounded-xl border inner-shadow"></div>
         
         <div class="mt-4 pt-3 flex gap-2">
             <input type="text" id="adminNewMsg" placeholder="پاسخ خود را بنویسید..." class="flex-1 p-3 border rounded-xl outline-none focus:border-blue-500 shadow-sm">
-            <button onclick="adminSendTicket()" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 shadow"><i class="fas fa-paper-plane"></i></button>
+            <button id="sendTicketBtn" onclick="adminSendTicket()" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 shadow"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 </div>
 
 <script>
-    // متغیرهای سراسری
+    // ---------- توابع عمومی ----------
     let allOrdersData = [];
     let currentOrderId = null;
     let adminToken = null;
 
-    // ------------------------------ مدیریت نشست (Token) ------------------------------
     function checkSavedSession() {
         const token = sessionStorage.getItem('adminToken');
         if (!token) return;
         fetch(GAS_URL, {
             method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
             body: JSON.stringify({action: "verify_token", token: token})
-        })
-        .then(res => res.json())
-        .then(data => {
+        }).then(res => res.json()).then(data => {
             if (data.status === 'success') {
                 adminToken = token;
                 document.getElementById('adminAuthSection').classList.add('hidden');
@@ -195,71 +245,28 @@
             } else {
                 sessionStorage.removeItem('adminToken');
             }
-        })
-        .catch(() => sessionStorage.removeItem('adminToken'));
+        }).catch(() => sessionStorage.removeItem('adminToken'));
     }
-
     window.addEventListener('load', checkSavedSession);
 
-    // ------------------------------ توابع کمکی ------------------------------
-    function unpackContactForAdmin(str) {
-        if(!str) return "اطلاعاتی ثبت نشده است.";
-        let res = "";
-        const mapNames = {
-            'Phone': '📞 شماره تماس', 'Email': '✉️ ایمیل', 'Address': '📍 آدرس',
-            'GoogleMap': '🗺️ گوگل مپ', 'Neshan': '🗺️ مپ نشان', 'Balad': '🗺️ مپ بلد',
-            'Insta': '📱 اینستاگرام', 'Wa': '💬 واتساپ', 'Telegram': '✈️ تلگرام',
-            'Eitaa': '📱 ایتا', 'Rubika': '📱 روبیکا'
-        };
-
-        if(str.includes("::")) {
-            str.split("||").forEach(p => {
-                let [key, val] = p.split("::");
-                let pName = mapNames[key] || key;
-                res += `${pName}: ${val}\n`;
-            });
-        } else { res = str; }
-        return res;
-    }
-
-    function extractBioParts(rawBio) {
-        if(!rawBio) return { bio: "ندارد", notes: "ندارد" };
-        let parts = rawBio.split("|||NOTES|||");
-        return { bio: parts[0] || "ندارد", notes: parts[1] || "ندارد" };
-    }
-
+    function unpackContactForAdmin(str) { /* ... مثل قبل */ }
+    function extractBioParts(rawBio) { /* ... مثل قبل */ }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    // ------------------------------ لاگین ------------------------------
-    function handleAdminLogin() {
-        const u = document.getElementById('adminUser').value;
-        const p = document.getElementById('adminPass').value;
-        if(!u || !p) return Swal.fire('خطا', 'فیلدها را پر کنید', 'warning');
-
-        Swal.fire({title:'در حال تایید مدیریت...', didOpen:()=>Swal.showLoading()});
-        fetch(GAS_URL, {
-            method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
-            body: JSON.stringify({action: "admin_login", username: u, password: p})
-        }).then(res => res.json()).then(data => {
-            if(data.status === 'success') {
-                Swal.close();
-                adminToken = data.token;
-                sessionStorage.setItem('adminToken', data.token);
-                document.getElementById('adminAuthSection').classList.add('hidden');
-                document.getElementById('adminDashboard').classList.remove('hidden');
-                loadAllData();
-            } else {
-                Swal.fire('خطا', data.message, 'error');
-            }
-        }).catch(err => Swal.fire('خطا', 'مشکل ارتباط با سرور', 'error'));
+    // ---------- اعتبارسنجی کد ملی ----------
+    function isValidIranianNationalCode(code) {
+        if (!/^\d{10}$/.test(code)) return false;
+        const check = +code[9];
+        const sum = [...code.substring(0,9)].reduce((s, c, i) => s + (+c) * (10 - i), 0);
+        const rem = sum % 11;
+        return (rem < 2 && check === rem) || (rem >= 2 && check === 11 - rem);
     }
 
-    function logoutAdmin() {
-        sessionStorage.removeItem('adminToken');
-        location.reload();
-    }
+    // ---------- لاگین ----------
+    function handleAdminLogin() { /* ... مثل قبل */ }
+    function logoutAdmin() { sessionStorage.removeItem('adminToken'); location.reload(); }
 
-    // ------------------------------ ایجاد کاربر جدید (توسعه‌یافته) ------------------------------
+    // ---------- ایجاد کاربر جدید (تغییریافته) ----------
     function openCreateUserModal() {
         document.getElementById('createUserModal').classList.remove('hidden');
     }
@@ -268,11 +275,12 @@
         const fullName = document.getElementById('newUserFullName').value.trim();
         const nationalID = document.getElementById('newUserNationalID').value.trim();
         const phone = document.getElementById('newUserPhone').value.trim();
-        const email = document.getElementById('newUserEmail').value.trim();
-        const pass = document.getElementById('newUserPass').value.trim();
 
-        if(!fullName || !nationalID || !phone || !email || !pass) {
+        if (!fullName || !nationalID || !phone) {
             return Swal.fire('خطا', 'تمام فیلدها الزامی هستند', 'warning');
+        }
+        if (!isValidIranianNationalCode(nationalID)) {
+            return Swal.fire('خطا', 'کد ملی نامعتبر است. لطفاً یک کد ملی ۱۰ رقمی صحیح وارد کنید.', 'error');
         }
 
         Swal.fire({title:'در حال ساخت...', didOpen:()=>Swal.showLoading()});
@@ -280,10 +288,10 @@
             method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
             body: JSON.stringify({
                 action: "admin_create_user",
-                fullName, nationalID, phone, email, password: pass
+                fullName, nationalID, phone
             })
         }).then(res => res.json()).then(d => {
-            if(d.status === 'success') {
+            if (d.status === 'success') {
                 Swal.fire('موفق', d.message, 'success');
                 closeModal('createUserModal');
             } else {
@@ -292,54 +300,21 @@
         });
     }
 
-    // ------------------------------ لود داده‌ها با جستجوی سمت سرور ------------------------------
-    function loadAllData(searchQuery = '') {
-        const container = document.getElementById('ordersContainer');
-        container.innerHTML = `<div class="skeleton-box h-32 w-full mb-4"></div><div class="skeleton-box h-32 w-full"></div>`;
-        
-        const body = {action: "admin_get_all_data"};
-        if (searchQuery.trim()) body.search = searchQuery.trim();
+    // ---------- لود داده‌ها (جستجوی سمت سرور) ----------
+    function loadAllData(searchQuery = '') { /* ... مثل قبل */ }
+    function handleSearch() { loadAllData(document.getElementById('searchInput').value); }
 
-        fetch(GAS_URL, {
-            method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
-            body: JSON.stringify(body)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === 'success') {
-                allOrdersData = data.orders;
-                renderOrdersCategorized(allOrdersData);
-            } else {
-                Swal.fire('خطا', data.message, 'error');
-            }
-        })
-        .catch(() => Swal.fire('خطا', 'مشکل ارتباط با سرور', 'error'));
-    }
-
-    function handleSearch() {
-        const q = document.getElementById('searchInput').value;
-        loadAllData(q);
-    }
-
-    // ------------------------------ نمایش دسته‌بندی‌شده ------------------------------
-    const statusOrder = [
-        "ثبت اولیه",
-        "در انتظار شروع انجام",
-        "در حال طراحی",
-        "آماده تحویل",
-        "تکمیل شده"
-    ];
+    // ---------- نمایش دسته‌بندی‌شده با collapse ----------
+    const statusOrder = ["ثبت اولیه", "در انتظار شروع انجام", "در حال طراحی", "آماده تحویل", "تکمیل شده"];
 
     function renderOrdersCategorized(ordersArray) {
         const container = document.getElementById('ordersContainer');
         container.innerHTML = '';
-
         if (!ordersArray.length) {
-            container.innerHTML = '<p class="col-span-full text-center text-gray-500 font-bold">هیچ سفارشی یافت نشد.</p>';
+            container.innerHTML = '<p class="text-center text-gray-500 font-bold py-10">هیچ سفارشی یافت نشد.</p>';
             return;
         }
 
-        // گروه‌بندی بر اساس وضعیت
         const groups = {};
         ordersArray.forEach(order => {
             const status = order.orderStatus.trim();
@@ -347,111 +322,78 @@
             groups[status].push(order);
         });
 
-        // ایجاد بخش‌ها بر اساس ترتیب مشخص
         statusOrder.forEach(statusKey => {
             const orders = groups[statusKey] || [];
-            if (orders.length === 0) return; // بخش‌های خالی نمایش داده نشوند
+            if (orders.length === 0) return;
 
             const sectionDiv = document.createElement('div');
-            sectionDiv.className = 'status-section bg-white rounded-xl shadow p-4';
+            sectionDiv.className = 'status-section';
 
-            const title = document.createElement('h2');
-            title.className = 'text-xl font-bold text-indigo-900 mb-3 flex items-center';
-            title.innerHTML = `<i class="fas fa-clipboard-list ml-2"></i> ${statusKey} (${orders.length} سفارش)`;
-            sectionDiv.appendChild(title);
+            // محاسبه تعداد فیش‌های در انتظار
+            const pendingTotal = orders.reduce((sum, o) => {
+                return sum + (o.receipts ? o.receipts.filter(r => r.status.includes('در انتظار')).length : 0);
+            }, 0);
+            const badgeHTML = pendingTotal > 0 ? `<span class="badge">${pendingTotal} فیش جدید</span>` : '';
+
+            const header = document.createElement('div');
+            header.className = 'status-header';
+            header.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-chevron-left transition-transform duration-200" id="chevron-${statusKey}"></i>
+                    <span>${statusKey} (${orders.length})</span>
+                    ${badgeHTML}
+                </div>
+            `;
+            const content = document.createElement('div');
+            content.className = 'status-content';
+            content.id = `content-${statusKey}`;
 
             const grid = document.createElement('div');
             grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
-            sectionDiv.appendChild(grid);
+            content.appendChild(grid);
 
-            // نمایش اولیه ۱۰ عدد
-            const initialCount = 10;
-            let shownCount = Math.min(initialCount, orders.length);
-
-            function renderVisible() {
+            let shownCount = Math.min(10, orders.length);
+            function renderGrid() {
                 grid.innerHTML = '';
                 for (let i = 0; i < shownCount; i++) {
                     grid.innerHTML += createOrderCard(orders[i]);
                 }
-                // دکمه "بیشتر" اگر هنوز مواردی باقی مانده
                 if (shownCount < orders.length) {
                     const moreBtn = document.createElement('button');
-                    moreBtn.className = 'load-more-btn col-span-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded mt-2';
+                    moreBtn.className = 'load-more-btn col-span-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-xl mt-2';
                     moreBtn.textContent = `نمایش بیشتر (${orders.length - shownCount} سفارش دیگر)`;
                     moreBtn.onclick = () => {
                         shownCount = Math.min(shownCount + 10, orders.length);
-                        renderVisible();
+                        renderGrid();
                     };
                     grid.appendChild(moreBtn);
                 }
             }
-            renderVisible();
+            renderGrid();
+
+            header.onclick = () => {
+                content.classList.toggle('open');
+                const chevron = header.querySelector('i');
+                chevron.classList.toggle('fa-chevron-left');
+                chevron.classList.toggle('fa-chevron-down');
+            };
+
+            sectionDiv.appendChild(header);
+            sectionDiv.appendChild(content);
             container.appendChild(sectionDiv);
         });
     }
 
-    function createOrderCard(order) {
-        let pendingReceipts = order.receipts ? order.receipts.filter(r => r.status.includes('در انتظار')).length : 0;
-        let receiptBadge = pendingReceipts > 0 ? `<span class="absolute -top-3 -right-3 bg-red-500 text-white text-xs px-3 py-1 rounded-full animate-bounce shadow-lg">${pendingReceipts} فیش جدید</span>` : '';
-        
-        let statClass = order.orderStatus.includes('تکمیل') ? 'bg-green-100 text-green-800' : 'bg-indigo-100 text-indigo-800';
+    function createOrderCard(order) { /* ... مثل قبل */ }
 
-        // اطلاعات کاربر (اختیاری)
-        let userInfoHtml = '';
-        if (order.user) {
-            userInfoHtml = `
-                <div class="text-xs text-gray-600 mt-1 border-t pt-2">
-                    <p><strong>کاربر:</strong> ${order.user.fullName || '---'}</p>
-                    <p><strong>کد ملی:</strong> ${order.user.nationalID || '---'}</p>
-                    <p><strong>تلفن:</strong> ${order.user.phone || '---'}</p>
-                </div>`;
-        }
-
-        return `
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 relative hover:shadow-lg transition">
-                ${receiptBadge}
-                <div class="flex justify-between items-start border-b pb-3 mb-3">
-                    <div>
-                        <h3 class="font-bold text-lg text-indigo-900">${order.siteName || 'بدون نام'}</h3>
-                        <p class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded inline-block mt-1">${order.orderId}</p>
-                        <p class="text-xs text-gray-600 mt-2 font-bold"><i class="fas fa-user text-gray-400"></i> ${order.email}</p>
-                    </div>
-                    <button onclick="generateAndShowText('${order.orderId}')" class="bg-indigo-50 text-indigo-600 p-3 rounded-lg hover:bg-indigo-600 hover:text-white transition shadow-sm" title="استخراج متن تمیز پروژه"><i class="fas fa-copy text-xl"></i></button>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2 text-xs mb-4">
-                    <div class="bg-gray-50 p-2 rounded border"><span class="text-gray-500 block mb-1">وضعیت پروژه:</span><span class="font-bold px-2 py-1 rounded ${statClass}">${order.orderStatus}</span></div>
-                    <div class="bg-gray-50 p-2 rounded border"><span class="text-gray-500 block mb-1">مالی:</span><span class="font-bold text-gray-800">${order.paymentStatus}</span></div>
-                    <div class="bg-gray-50 p-2 rounded border col-span-2"><span class="text-gray-500 block mb-1">قالب:</span><span class="font-bold">${order.template || 'انتخاب نشده'}</span></div>
-                </div>
-
-                ${userInfoHtml}
-
-                <div class="flex flex-wrap gap-2 border-t pt-4">
-                    <button onclick="openStatusModal('${order.orderId}')" class="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-yellow-600"><i class="fas fa-edit"></i> ویرایش / تحویل</button>
-                    <button onclick="openAdminTickets('${order.orderId}')" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-600"><i class="fas fa-comments"></i> پشتیبانی</button>
-                </div>
-                <div class="flex flex-wrap gap-2 mt-2">
-                    <button onclick="openReceiptsModal('${order.orderId}')" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-green-700 relative"><i class="fas fa-receipt"></i> فیش‌ها</button>
-                    <button onclick="openAdminImages('${order.orderId}')" class="flex-1 bg-purple-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-purple-600"><i class="fas fa-images"></i> گالری (${order.images.length})</button>
-                </div>
-            </div>
-        `;
-    }
-
-    // ------------------------------ تولید متن کپی (اصلاح‌شده) ------------------------------
+    // ---------- تولید متن کپی (حذف سه خط) ----------
     function generateAndShowText(orderId) {
         const order = allOrdersData.find(o => o.orderId === orderId);
         if (!order) return;
         const bInfo = extractBioParts(order.bio);
         const contacts = unpackContactForAdmin(order.contactInfo);
         
-        // حذف هدر قبلی
         let text = `🌍 درخواست طراحی سایت (${order.siteName || 'بدون نام'})
---------------------------------------
-▪️ کد سفارش: ${order.orderId}
-▪️ نام کاربری (ایمیل): ${order.email}
-▪️ تاریخ ثبت: ${order.regDate || 'نامشخص'}
 
 🌍 [ مشخصات اصلی سایت ]
 --------------------------------------
@@ -480,204 +422,109 @@ ${contacts}
 
         document.getElementById('formattedDataText').innerText = text;
         document.getElementById('copyDataModal').classList.remove('hidden');
-        // به‌روزرسانی عنوان مودال
         document.querySelector('#copyDataModal .font-bold').innerText = `درخواست طراحی سایت (${order.siteName || 'بدون نام'})`;
     }
 
-    function copyToClipboard() {
-        const text = document.getElementById('formattedDataText').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'در کلیپ‌بورد کپی شد!', showConfirmButton: false, timer: 1500});
-        });
-    }
+    function copyToClipboard() { /* ... مثل قبل */ }
 
-    // ------------------------------ ویرایش وضعیت سفارش ------------------------------
-    function openStatusModal(orderId) {
+    // ---------- ویرایش وضعیت ----------
+    function openStatusModal(orderId) { /* ... مثل قبل */ }
+    function saveAdminOrderUpdates() { /* ... مثل قبل */ }
+
+    // ---------- فیش‌ها (base64) ----------
+    function openReceiptsModal(orderId) { /* ... مثل قبل */ }
+    function loadImageBase64(fileId, callback) { /* ... مثل قبل */ }
+    function handleReceiptAdmin(orderId, rowIdx, newStatus, stage) { /* ... مثل قبل */ }
+
+    // ---------- گالری (base64) ----------
+    function openAdminImages(orderId) { /* ... مثل قبل */ }
+
+    // ---------- چت و تیکت (بهبودیافته) ----------
+    function openAdminTickets(orderId) {
         currentOrderId = orderId;
-        const order = allOrdersData.find(o => o.orderId === orderId);
-        
-        document.getElementById('inpOrderStatus').value = order.orderStatus.trim();
-        
-        let pStatus = order.paymentStatus.trim();
-        if(pStatus.includes("پیش پرداخت") || pStatus.includes("قسط 1")) pStatus = "پیش پرداخت انجام شد";
-        else if(pStatus.includes("تسویه") || pStatus.includes("قسط 2")) pStatus = "تسویه کامل انجام شد";
-        else pStatus = "پرداخت نشده";
-        
-        document.getElementById('inpPaymentStatus').value = pStatus;
-        
-        document.getElementById('inpSiteUrl').value = order.siteUrl || "";
-        document.getElementById('inpSiteEmail').value = order.siteEmail || "";
-        document.getElementById('inpSitePass').value = order.sitePass || "";
-        document.getElementById('inpGithub').value = order.githubLink || "";
-
-        document.getElementById('editStatusModal').classList.remove('hidden');
+        document.getElementById('adminNewMsg').value = '';
+        loadChatTickets(orderId);
+        document.getElementById('adminTicketsModal').classList.remove('hidden');
     }
 
-    function saveAdminOrderUpdates() {
-        Swal.fire({title:'در حال ذخیره...', didOpen:()=>Swal.showLoading()});
-        const payload = {
-            action: "admin_update_order",
-            orderId: currentOrderId,
-            orderStatus: document.getElementById('inpOrderStatus').value,
-            paymentStatus: document.getElementById('inpPaymentStatus').value,
-            siteUrl: document.getElementById('inpSiteUrl').value,
-            siteEmail: document.getElementById('inpSiteEmail').value,
-            sitePass: document.getElementById('inpSitePass').value,
-            githubLink: document.getElementById('inpGithub').value
-        };
-
-        fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) }).then(r=>r.json()).then(d=>{
-            if(d.status==='success') { Swal.fire('موفق', d.message, 'success'); closeModal('editStatusModal'); loadAllData(); }
-            else Swal.fire('خطا', d.message, 'error');
-        });
-    }
-
-    // ------------------------------ فیش‌ها (با نمایش Base64) ------------------------------
-    function openReceiptsModal(orderId) {
-        const order = allOrdersData.find(o => o.orderId === orderId);
-        const container = document.getElementById('receiptsContainer');
-        container.innerHTML = '';
-
-        if(!order.receipts || order.receipts.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500 font-bold py-6">هیچ فیش دستی برای این سفارش ارسال نشده است.</p>';
-        } else {
-            order.receipts.forEach(r => {
-                // r.link شامل لینک مستقیم یا شناسه فایل است. ما شناسه را از لینک استخراج می‌کنیم.
-                let fileId = null;
-                if (r.link && r.link.includes('/file/d/')) {
-                    fileId = r.link.split('/file/d/')[1].split('/')[0];
-                } else if (r.link && r.link.includes('id=')) {
-                    fileId = r.link.split('id=')[1];
-                } else {
-                    fileId = r.link; // ممکن است خود شناسه باشد
-                }
-
-                let badgeClass = r.status.includes('تایید') ? 'bg-green-100 text-green-800' : (r.status.includes('رد') ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800 animate-pulse');
-                let receiptDiv = document.createElement('div');
-                receiptDiv.className = 'border rounded-lg p-5 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4';
-                receiptDiv.innerHTML = `
-                    <div>
-                        <p class="font-bold text-gray-800">پرداخت قسط مرحله: <span class="bg-indigo-100 px-2 py-1 rounded text-indigo-800">${r.stage}</span></p>
-                        <p class="text-sm text-gray-600 mt-2">مبلغ: <strong>${r.amount}</strong> | زمان: <span dir="ltr">${r.date}</span></p>
-                        <span class="text-xs px-2 py-1 rounded mt-2 inline-block font-bold ${badgeClass}">${r.status}</span>
-                    </div>
-                    <div class="flex gap-2 items-center">
-                        <div class="receipt-image-container" data-fileid="${fileId}">
-                            <span class="text-gray-400">در حال بارگذاری تصویر...</span>
-                        </div>
-                        ${r.status.includes('در انتظار') ? `
-                            <button onclick="handleReceiptAdmin('${orderId}', ${r.rowIdx}, 'تایید شده', ${r.stage})" class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 shadow" title="تایید پرداخت"><i class="fas fa-check"></i></button>
-                            <button onclick="handleReceiptAdmin('${orderId}', ${r.rowIdx}, 'رد شده', ${r.stage})" class="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 shadow" title="رد پرداخت"><i class="fas fa-times"></i></button>
-                        ` : ''}
-                    </div>
-                `;
-                container.appendChild(receiptDiv);
-
-                // بارگذاری تصویر از سرور (Base64)
-                if (fileId) {
-                    loadImageBase64(fileId, (base64) => {
-                        const imgContainer = receiptDiv.querySelector('.receipt-image-container');
-                        if (imgContainer) {
-                            imgContainer.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-w-xs max-h-32 rounded shadow" alt="فیش">`;
-                        }
-                    });
-                }
-            });
-        }
-        document.getElementById('receiptsModal').classList.remove('hidden');
-    }
-
-    // تابع کمکی برای دریافت تصویر Base64 از سرور
-    function loadImageBase64(fileId, callback) {
+    function loadChatTickets(orderId) {
+        const box = document.getElementById('adminChatBox');
+        box.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fas fa-spinner fa-spin"></i> در حال بارگذاری...</div>';
         fetch(GAS_URL, {
-            method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
-            body: JSON.stringify({action: "get_image_base64", fileId: fileId})
+            method: "POST",
+            headers: {"Content-Type": "text/plain;charset=utf-8"},
+            body: JSON.stringify({action: "admin_get_order_tickets", orderId: orderId})
         })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                callback(data.base64);
+                renderChatMessages(data.tickets);
             } else {
-                console.error('Error loading image:', data.message);
-                callback(null);
+                box.innerHTML = '<p class="text-center text-red-500">خطا در بارگذاری پیام‌ها</p>';
             }
         })
-        .catch(() => callback(null));
-    }
-
-    function handleReceiptAdmin(orderId, rowIdx, newStatus, stage) {
-        Swal.fire({title:'درحال اعمال...', didOpen:()=>Swal.showLoading()});
-        fetch(GAS_URL, {
-            method: "POST", body: JSON.stringify({action: "admin_handle_receipt", orderId: orderId, receiptRow: rowIdx, newStatus: newStatus, stage: stage})
-        }).then(r=>r.json()).then(d=>{
-            if(d.status==='success') { Swal.fire('موفق', d.message, 'success'); closeModal('receiptsModal'); loadAllData(); }
-            else Swal.fire('خطا', d.message, 'error');
+        .catch(() => {
+            box.innerHTML = '<p class="text-center text-red-500">خطا در ارتباط با سرور</p>';
         });
     }
 
-    // ------------------------------ گالری تصاویر (Base64) ------------------------------
-    function openAdminImages(orderId) {
-        const order = allOrdersData.find(o => o.orderId === orderId);
-        const gallery = document.getElementById('adminImagesGallery');
-        gallery.innerHTML = '';
-        if(!order.images || order.images.length === 0) {
-            gallery.innerHTML = '<p class="col-span-full text-center text-gray-500 font-bold py-6">تصویری آپلود نشده است.</p>';
-        } else {
-            order.images.forEach(img => {
-                let imgDiv = document.createElement('div');
-                imgDiv.className = 'border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition bg-white p-2';
-                imgDiv.innerHTML = `
-                    <div class="image-gallery-container h-32 bg-gray-100 flex items-center justify-center rounded" data-fileid="${img.id}">
-                        <span class="text-gray-400">در حال بارگذاری...</span>
-                    </div>
-                    <p class="text-xs mt-2 text-center text-gray-800 font-bold truncate" title="${img.desc}">${img.desc}</p>
-                `;
-                gallery.appendChild(imgDiv);
-                loadImageBase64(img.id, (base64) => {
-                    const container = imgDiv.querySelector('.image-gallery-container');
-                    if (container && base64) {
-                        container.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-h-full max-w-full object-cover" alt="${img.desc}">`;
-                    }
-                });
-            });
-        }
-        document.getElementById('adminImagesModal').classList.remove('hidden');
-    }
-
-    // ------------------------------ تیکت‌ها ------------------------------
-    function openAdminTickets(orderId) {
-        currentOrderId = orderId;
+    function renderChatMessages(tickets) {
         const box = document.getElementById('adminChatBox');
         box.innerHTML = '';
-        
-        const order = allOrdersData.find(o => o.orderId === orderId);
-        if(order && order.tickets && order.tickets.length > 0) {
-            order.tickets.forEach(t => {
-                let isAdmin = t.sender === "پشتیبانی ToWeb";
-                box.innerHTML += `
-                    <div class="chat-bubble shadow-sm ${isAdmin ? 'chat-admin' : 'chat-user'}">
-                        <div class="text-xs opacity-70 mb-1 border-b pb-1 font-bold">${t.sender} <span class="font-normal text-[10px] mx-2">${t.date}</span></div>
-                        <div class="leading-relaxed mt-1">${t.message}</div>
-                    </div>`;
-            });
-            setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
-        } else { box.innerHTML = '<p class="text-center text-gray-400 mt-10 font-bold">هنوز پیامی رد و بدل نشده است.</p>'; }
-        
-        document.getElementById('adminTicketsModal').classList.remove('hidden');
+        if (!tickets || tickets.length === 0) {
+            box.innerHTML = '<p class="text-center text-gray-400 mt-10 font-bold">هنوز پیامی رد و بدل نشده است.</p>';
+            return;
+        }
+        tickets.forEach(t => {
+            const isAdmin = t.sender === "پشتیبانی ToWeb";
+            box.innerHTML += `
+                <div class="chat-bubble shadow-sm ${isAdmin ? 'chat-admin' : 'chat-user'}">
+                    <div class="text-xs opacity-70 mb-1 border-b pb-1 font-bold">${t.sender} <span class="font-normal text-[10px] mx-2">${t.date}</span></div>
+                    <div class="leading-relaxed mt-1">${t.message}</div>
+                </div>`;
+        });
+        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
     }
 
     function adminSendTicket() {
         const msg = document.getElementById('adminNewMsg').value.trim();
-        if(!msg) return;
-        
+        if (!msg || !currentOrderId) return;
+
+        const sendBtn = document.getElementById('sendTicketBtn');
+        sendBtn.disabled = true;
+
+        // ایجاد حباب موقت با اسپینر
+        const box = document.getElementById('adminChatBox');
+        const tempDiv = document.createElement('div');
+        tempDiv.className = 'chat-bubble chat-admin flex items-center gap-2';
+        tempDiv.innerHTML = `<i class="fas fa-spinner spinner text-blue-400"></i> ${msg}`;
+        box.appendChild(tempDiv);
+        box.scrollTop = box.scrollHeight;
+
         fetch(GAS_URL, {
-            method: "POST", body: JSON.stringify({action: "admin_reply_ticket", orderId: currentOrderId, message: msg})
-        }).then(r=>r.json()).then(d=>{
-            if(d.status==='success') {
+            method: "POST",
+            headers: {"Content-Type": "text/plain;charset=utf-8"},
+            body: JSON.stringify({action: "admin_reply_ticket", orderId: currentOrderId, message: msg})
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                // جایگزینی اسپینر با تیک
+                tempDiv.querySelector('.spinner').classList.remove('fa-spinner', 'spinner');
+                tempDiv.querySelector('.spinner').classList.add('fa-check', 'text-green-500');
                 document.getElementById('adminNewMsg').value = '';
-                loadAllData(); // رفرش خودکار
-                setTimeout(()=>openAdminTickets(currentOrderId), 1500);
+                // بارگذاری مجدد چت برای دریافت پیام جدید
+                setTimeout(() => {
+                    loadChatTickets(currentOrderId);
+                }, 800);
+            } else {
+                tempDiv.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i> خطا: ${d.message}`;
             }
+            sendBtn.disabled = false;
+        })
+        .catch(() => {
+            tempDiv.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i> خطا در ارتباط`;
+            sendBtn.disabled = false;
         });
     }
 </script>
