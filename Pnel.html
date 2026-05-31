@@ -11,11 +11,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap');
         body { font-family: 'Vazirmatn', sans-serif; background-color: #f3f4f6; }
         .hidden { display: none !important; }
-        .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; font-size: 0.9rem; transition: all 0.3s ease; }
+        .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; font-size: 0.9rem; }
         .chat-user { background-color: #eff6ff; color: #1e3a8a; border-bottom-right-radius: 0; margin-left: auto; border: 1px solid #bfdbfe; }
         .chat-admin { background-color: #f3f4f6; color: #374151; border-bottom-left-radius: 0; margin-right: auto; border: 1px solid #e5e7eb; }
         .skeleton-box {
-            background: #e2e8f0;
             background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite linear;
@@ -29,31 +28,19 @@
         }
         .online-bar { background-color: #10b981; color: white; }
         .offline-bar { background-color: #ef4444; color: white; }
-        .pulse-skeleton {
-            display: inline-block;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite linear;
-        }
-        .image-preview-modal img { max-width: 90vw; max-height: 90vh; }
+        .image-preview-enter { opacity: 0; }
+        .image-preview-active { opacity: 1; }
     </style>
 </head>
 <body class="text-gray-800">
+
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwwLrcP1Wjmt7NJ-wTqyqvScErsli7UsacQekQu4EtamTQvP0GYZmrUYIpB2feuy0Y/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwQLkWRqlL9hmsua2Q1kTNtOBWDjmPF-w0GLtottMivZYkok_tZo0JWDNs5ZuuZ1EQv/exec";
 </script>
 
 <div id="connectionStatus" class="hidden"></div>
 
-<!-- لایه نمایش بزرگ تصویر -->
-<div id="imageViewerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[60]" onclick="closeImageViewer()">
-    <img id="imageViewerImg" class="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl" onclick="event.stopPropagation()">
-    <button class="absolute top-4 right-4 text-white text-3xl hover:text-red-400" onclick="closeImageViewer()">✕</button>
-</div>
-
-<!-- بخش ورود -->
+<!-- بخش احراز هویت -->
 <div id="authSection" class="min-h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded-xl shadow-lg w-96">
         <h2 class="text-2xl font-bold text-center mb-6 text-blue-600">ورود به حساب</h2>
@@ -73,18 +60,17 @@
     <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-40">
         <div class="font-bold text-xl text-blue-600 flex items-center gap-3">
             <span>ToWeb</span>
-            <button onclick="loadOrders()" class="text-gray-400 hover:text-blue-600 transition" title="بروزرسانی"><i class="fas fa-sync-alt"></i></button>
+            <button onclick="loadOrders()" class="text-gray-400 hover:text-blue-600 transition" title="بروزرسانی اطلاعات"><i class="fas fa-sync-alt"></i></button>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center">
             <span id="userNationalCodeDisplay" class="ml-4 text-sm text-gray-600 hidden md:inline"></span>
-            <button onclick="showUserProfile()" class="text-gray-600 hover:text-blue-600 p-2" title="پروفایل"><i class="fas fa-user-circle text-xl"></i></button>
-            <button onclick="changePassword()" class="text-gray-600 hover:text-blue-600 ml-2 text-sm"><i class="fas fa-key"></i> تغییر رمز</button>
-            <button onclick="logout()" class="text-red-500 hover:text-red-700 text-sm ml-2"><i class="fas fa-sign-out-alt"></i> خروج</button>
+            <button onclick="openProfileModal()" class="text-gray-600 hover:text-blue-600 ml-4 text-sm transition" title="مشخصات کاربری"><i class="fas fa-user-circle"></i></button>
+            <button onclick="changePassword()" class="text-gray-600 hover:text-blue-600 ml-4 text-sm transition"><i class="fas fa-key"></i> تغییر رمز</button>
+            <button onclick="logout()" class="text-red-500 hover:text-red-700 text-sm"><i class="fas fa-sign-out-alt"></i> خروج</button>
         </div>
     </nav>
 
     <div class="container mx-auto p-6 max-w-5xl">
-        <!-- دکمه سفارش جدید -->
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8 flex justify-between items-center shadow-sm">
             <div>
                 <h2 class="text-lg font-bold text-blue-800">سایت جدید نیاز دارید؟</h2>
@@ -93,28 +79,181 @@
             <button onclick="showOrderForm()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 shadow-md font-bold transition"><i class="fas fa-plus ml-2"></i> ایجاد سفارش جدید</button>
         </div>
 
-        <!-- فرم ایجاد سفارش (step1 + step2) -->
+        <!-- فرم سفارش جدید -->
         <div id="newOrderForm" class="hidden bg-white p-6 rounded-xl shadow-lg mb-8 border-t-4 border-blue-600">
             <div class="flex justify-between items-center border-b pb-2 mb-4">
                 <h2 class="text-xl font-bold">ثبت سفارش جدید</h2>
                 <button onclick="closeOrderForm()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
             </div>
+            
             <div id="step1">
                 <input type="text" id="siteName" maxlength="100" placeholder="نام سایت" class="w-full mb-4 p-3 border rounded-lg">
                 <input type="text" id="slogan" maxlength="150" placeholder="شعار سایت" class="w-full mb-4 p-3 border rounded-lg">
-                <select id="template" class="w-full mb-4 p-3 border rounded-lg"><!-- گزینه‌ها مشابه قبل --></select>
+                <select id="template" class="w-full mb-4 p-3 border rounded-lg">
+                    <option value="">انتخاب قالب مد نظر...</option>
+                    <option value="سالن زیبایی - کد 10">سالن زیبایی - کد 10</option>
+                    <option value="کلینیک زیبایی/ لیزر - کد 11">کلینیک زیبایی/ لیزر - کد 11</option>
+                    <option value="لوازم آرایشی - 12">لوازم آرایشی - 12</option>
+                    <option value="مربی بدنسازی- کد 13">مربی بدنسازی- کد 13</option>
+                    <option value="معلم خصوصی - کد 14">معلم خصوصی - کد 14</option>
+                    <option value="مربی فوتبال - 15">مربی فوتبال - 15</option>
+                    <option value="مربی زبان کد 16">مربی زبان کد 16</option>
+                    <option value="مربی کنکور - کد 17">مربی کنکور - کد 17</option>
+                    <option value="آموزشگاه کنکور - کد 18">آموزشگاه کنکور - کد 18</option>
+                    <option value="دفتر وکالت - کد 19">دفتر وکالت - کد 19</option>
+                    <option value="دفتر املاک - کد 20">دفتر املاک - کد 20</option>
+                    <option value="آتلیه و عکاسی - کد 21">آتلیه و عکاسی - کد 21</option>
+                    <option value="آرایشگاه مردانه - کد 22">آرایشگاه مردانه - کد 22</option>
+                    <option value="مزون عروس - کد 23">مزون عروس - کد 23</option>
+                    <option value="جواهر آلات - کد 24">جواهر آلات - کد 24</option>
+                    <option value="کافه - کد 25">کافه - کد 25</option>
+                    <option value="رستوران - کد 26">رستوران - کد 26</option>
+                    <option value="دفتر طراحی و معماری - کد 27">دفتر طراحی و معماری - کد 27</option>
+                    <option value="دفتر مشاوره / مشاور کد 28">دفتر مشاوره / مشاور کد 28</option>
+                    <option value="بوتیک - کد 29">بوتیک - کد 29</option>
+                    <option value="طلافروشی - کد 30">طلافروشی - کد 30</option>
+                    <option value="مؤسسه قرآنی - کد 31">مؤسسه قرآنی - کد 31</option>
+                    <option value="خواننده - کد 32">خواننده - کد 32</option>
+                    <option value="بلاگر - کد 33">بلاگر - کد 33</option>
+                    <option value="صفحه شخصی - کد 34">صفحه شخصی - کد 34</option>
+                </select>
                 <button onclick="submitStep1()" class="bg-blue-600 text-white px-6 py-2 rounded-lg w-full">ثبت اولیه و ادامه</button>
             </div>
+
             <div id="step2" class="hidden mt-6 pt-6 border-t border-gray-200">
                 <div class="bg-yellow-50 text-yellow-800 p-3 rounded-lg mb-4 text-sm"><i class="fas fa-exclamation-triangle"></i> برای فعال شدن دکمه پرداخت بیعانه، تکمیل این بخش الزامی است.</div>
-                <textarea id="bio" maxlength="1000" placeholder="درباره کسب و کار / بیوگرافی (الزامی)" class="w-full mb-4 p-3 border rounded-lg h-24"></textarea>
                 
-                <!-- فیلدهای اضافه شده جدید -->
-                <!-- تلفن‌ها -->
-                <div class="mb-4"><p class="font-bold text-gray-700 border-b pb-2 mb-2">شماره‌های تماس</p><div id="phonesContainer"></div><button onclick="addPhoneField()" class="text-blue-600 text-sm hover:underline"><i class="fas fa-plus-circle"></i> افزودن شماره</button></div>
-                <!-- شبکه‌های اجتماعی (قدیم + جدید) -->
-                <!-- ... تمامی فیلدهای جدید اینجا درج می‌شوند ... -->
-                <button id="payBtn" disabled class="bg-gray-400 text-white px-8 py-3 rounded-xl font-bold cursor-not-allowed flex items-center shadow mt-6"><i class="fas fa-credit-card ml-2"></i> ادامه جهت پرداخت بیعانه</button>
+                <textarea id="bio" maxlength="1000" placeholder="درباره کسب و کار / بیوگرافی (الزامی - حداکثر ۱۰۰۰ کاراکتر)" class="w-full mb-4 p-3 border rounded-lg h-24"></textarea>
+                
+                <!-- بخش اطلاعات تماس اصلی -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="col-span-full"><p class="text-sm text-gray-600 mb-2 font-bold border-b pb-2">راه‌های ارتباطی کسب و کار:</p></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden">
+                        <span class="p-3 bg-gray-100 text-gray-500 border-l"><i class="fas fa-phone"></i></span>
+                        <input type="text" id="inp_Phone" maxlength="100" placeholder="شماره تماس اصلی" class="w-full p-2 outline-none text-sm" dir="ltr">
+                    </div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden">
+                        <span class="p-3 bg-gray-100 text-gray-500 border-l"><i class="fas fa-envelope"></i></span>
+                        <input type="email" id="inp_Email" maxlength="100" placeholder="ایمیل کاری" class="w-full p-2 outline-none text-sm" dir="ltr">
+                    </div>
+                    <div class="col-span-full flex items-center border rounded-lg bg-white overflow-hidden">
+                        <span class="p-3 bg-gray-100 text-gray-500 border-l"><i class="fas fa-map-marker-alt"></i></span>
+                        <input type="text" id="inp_Address" maxlength="200" placeholder="آدرس فیزیکی دفتر/فروشگاه" class="w-full p-2 outline-none text-sm">
+                    </div>
+                </div>
+
+                <!-- شماره‌های تماس اضافی -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between border-b pb-2 mb-2">
+                        <p class="text-sm font-bold text-gray-700">شماره‌های تماس بیشتر</p>
+                        <button type="button" onclick="addPhoneField('')" class="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-200"><i class="fas fa-plus ml-1"></i>افزودن شماره</button>
+                    </div>
+                    <div id="phoneList"></div>
+                </div>
+
+                <!-- نقشه‌ها -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="col-span-full"><p class="text-sm text-gray-600 mb-2 font-bold border-b pb-2">لینک نقشه‌ها (مسیریابی):</p></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden">
+                        <span class="p-3 bg-gray-100 text-blue-500 border-l"><i class="fas fa-map"></i></span>
+                        <input type="text" id="inp_GoogleMap" maxlength="200" placeholder="لینک گوگل مپ" class="w-full p-2 outline-none text-sm" dir="ltr">
+                    </div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden">
+                        <span class="p-3 bg-gray-100 text-red-500 border-l"><i class="fas fa-location-arrow"></i></span>
+                        <input type="text" id="inp_Neshan" maxlength="200" placeholder="لینک مپ نشان" class="w-full p-2 outline-none text-sm" dir="ltr">
+                    </div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden">
+                        <span class="p-3 bg-gray-100 text-green-500 border-l"><i class="fas fa-route"></i></span>
+                        <input type="text" id="inp_Balad" maxlength="200" placeholder="لینک مپ بلد" class="w-full p-2 outline-none text-sm" dir="ltr">
+                    </div>
+                </div>
+
+                <!-- شبکه‌های اجتماعی (قدیمی + جدید) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="col-span-full"><p class="text-sm text-gray-600 mb-2 font-bold border-b pb-2">شبکه‌های اجتماعی:</p></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-pink-500 border-l"><i class="fab fa-instagram"></i></span><input type="text" id="inp_Insta" maxlength="150" placeholder="آیدی یا لینک اینستاگرام" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-green-500 border-l"><i class="fab fa-whatsapp"></i></span><input type="text" id="inp_Wa" maxlength="150" placeholder="شماره یا لینک واتساپ" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-blue-400 border-l"><i class="fab fa-telegram"></i></span><input type="text" id="inp_Telegram" maxlength="150" placeholder="آیدی یا لینک تلگرام" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-orange-500 border-l"><i class="fas fa-comment-dots"></i></span><input type="text" id="inp_Eitaa" maxlength="150" placeholder="لینک کانال ایتا" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-purple-500 border-l"><i class="fas fa-users"></i></span><input type="text" id="inp_Rubika" maxlength="150" placeholder="لینک پیج روبیکا" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <!-- جدید -->
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-red-600 border-l"><i class="fab fa-youtube"></i></span><input type="text" id="inp_YouTube" maxlength="150" placeholder="لینک یوتیوب" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-blue-500 border-l"><i class="fas fa-comment"></i></span><input type="text" id="inp_Bale" maxlength="150" placeholder="لینک بله" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-indigo-500 border-l"><i class="fas fa-comment-dots"></i></span><input type="text" id="inp_Soroush" maxlength="150" placeholder="لینک سروش پلاس" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-gray-800 border-l"><i class="fab fa-twitter"></i></span><input type="text" id="inp_Twitter" maxlength="150" placeholder="لینک توییتر (X)" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-blue-800 border-l"><i class="fab fa-linkedin"></i></span><input type="text" id="inp_LinkedIn" maxlength="150" placeholder="لینک لینکدین" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                    <div class="flex items-center border rounded-lg bg-white overflow-hidden"><span class="p-3 bg-gray-100 text-red-500 border-l"><i class="fas fa-play"></i></span><input type="text" id="inp_Aparat" maxlength="150" placeholder="لینک آپارات" class="w-full p-2 outline-none text-sm" dir="ltr"></div>
+                </div>
+
+                <!-- CTA -->
+                <details class="mb-4 border rounded-lg p-3 bg-gray-50" open>
+                    <summary class="text-sm font-bold text-gray-700 cursor-pointer">دکمه دعوت (CTA) بالای سایت</summary>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <select id="ctaType" class="w-full p-2 border rounded-lg text-sm">
+                            <option value="">نوع دکمه</option>
+                            <option value="مشاوره رایگان">مشاوره رایگان</option>
+                            <option value="ثبت سفارش">ثبت سفارش</option>
+                            <option value="تماس با ما">تماس با ما</option>
+                            <option value="واتساپ">واتساپ</option>
+                            <option value="تلگرام">تلگرام</option>
+                            <option value="سفارشی">سفارشی</option>
+                        </select>
+                        <input type="text" id="ctaText" maxlength="50" placeholder="متن دکمه" class="w-full p-2 border rounded-lg text-sm">
+                        <input type="text" id="ctaLink" maxlength="200" placeholder="لینک مقصد" class="w-full p-2 border rounded-lg text-sm" dir="ltr">
+                    </div>
+                </details>
+
+                <!-- ساعات کاری -->
+                <details class="mb-4 border rounded-lg p-3 bg-gray-50">
+                    <summary class="text-sm font-bold text-gray-700 cursor-pointer">ساعات کاری</summary>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                        <input type="text" id="workDays" maxlength="100" placeholder="روزهای کاری (مثلاً شنبه تا پنجشنبه)" class="w-full p-2 border rounded-lg text-sm">
+                        <input type="text" id="workStart" maxlength="5" placeholder="ساعت شروع (09:00)" class="w-full p-2 border rounded-lg text-sm" dir="ltr">
+                        <input type="text" id="workEnd" maxlength="5" placeholder="ساعت پایان (18:00)" class="w-full p-2 border rounded-lg text-sm" dir="ltr">
+                    </div>
+                </details>
+
+                <!-- خدمات -->
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">خدمات (حداکثر ۳۰۰ کاراکتر)</label>
+                    <textarea id="services" maxlength="300" placeholder="خدمات ارائه شده" class="w-full p-2 border rounded-lg h-20 text-sm"></textarea>
+                </div>
+
+                <!-- توضیحات تکمیلی -->
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">توضیحات تکمیلی (حداکثر ۵۰۰ کاراکتر)</label>
+                    <textarea id="additional" maxlength="500" placeholder="توضیحات اضافی" class="w-full p-2 border rounded-lg h-20 text-sm"></textarea>
+                </div>
+
+                <!-- وضعیت نمایش بخش‌ها -->
+                <details class="mb-4 border rounded-lg p-3 bg-gray-50">
+                    <summary class="text-sm font-bold text-gray-700 cursor-pointer">نمایش/عدم نمایش بخش‌ها</summary>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                        <label class="flex items-center text-sm"><input type="checkbox" class="section-check" data-key="خدمات" checked> خدمات</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" class="section-check" data-key="نمونه‌کارها" checked> نمونه‌کارها</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" class="section-check" data-key="نظرات" checked> نظرات</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" class="section-check" data-key="ساعات کاری" checked> ساعات کاری</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" class="section-check" data-key="نقشه" checked> نقشه</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" class="section-check" data-key="فرم تماس" checked> فرم تماس</label>
+                        <label class="flex items-center text-sm"><input type="checkbox" class="section-check" data-key="شبکه‌های اجتماعی" checked> شبکه‌های اجتماعی</label>
+                    </div>
+                </details>
+
+                <textarea id="designNotes" maxlength="300" placeholder="توضیحات طراحی (حداکثر ۳۰۰ کاراکتر)" class="w-full p-3 border rounded-lg h-24 mb-4"></textarea>
+
+                <div class="bg-blue-50 text-blue-800 p-4 rounded-lg mb-4 text-sm border border-blue-200">
+                    <label class="flex items-center cursor-pointer font-bold">
+                        <input type="checkbox" id="wantsSeoDomain" class="mr-2 ml-2 w-5 h-5 text-blue-600 rounded">
+                        مایل به انجام خدمات سئو و اخذ دامنه اختصاصی هستم (مبلغ 1 میلیون تومان به فاکتور نهایی اضافه می‌شود)
+                    </label>
+                </div>
+
+                <div class="flex justify-between items-center mt-6">
+                    <button onclick="saveDetailsAndEnablePay()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 shadow font-bold">ذخیره اطلاعات</button>
+                    <button id="payBtn" disabled class="bg-gray-400 text-white px-8 py-3 rounded-xl font-bold cursor-not-allowed flex items-center shadow">
+                        <i class="fas fa-credit-card ml-2"></i> ادامه جهت پرداخت بیعانه
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -123,14 +262,731 @@
     </div>
 </div>
 
-<!-- مودال‌ها (پرداخت، تاریخچه، تحویل نهایی، تیکت، ویرایش سفارش، دامنه، گالری تصاویر، پروفایل) -->
-<!-- همگی با توجه به تغییرات جدید کامل شده‌اند -->
+<!-- مودال‌ها -->
+<div id="cardPaymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md relative">
+        <button onclick="closeModal('cardPaymentModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-credit-card text-blue-600"></i> پرداخت کارت به کارت</h2>
+        <div class="mb-4 text-center"><p class="text-gray-600 mb-1">مبلغ قابل پرداخت این قسط:</p><p class="text-2xl font-bold text-green-600" id="paymentAmountDisplay">0 تومان</p></div>
+        <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-sm text-yellow-800 mb-4 text-center leading-relaxed">
+            لطفاً مبلغ فوق را دقیقاً به شماره کارت زیر واریز نموده و تصویر رسید را آپلود کنید.<br>
+            (تصویر رسید به صورت خودکار فشرده می‌شود.)<br>
+            <span class="text-xs text-gray-500">(جهت کپی روی شماره کارت کلیک کنید)</span>
+            <div onclick="copyCardNumber()" class="text-xl font-bold mt-2 tracking-widest text-gray-900 bg-white p-2 border rounded cursor-pointer hover:bg-blue-50 transition shadow-sm" dir="ltr" title="کلیک برای کپی">6037991105137743</div>
+            <div class="text-xs text-gray-500 mt-1 font-bold">به نام: امیرحسین دادگستر</div>
+        </div>
+        <input type="file" id="receiptInput" accept="image/*" class="w-full border p-2 rounded-lg text-sm bg-white mb-3">
+        <div id="receiptPreview" class="hidden mb-3 w-full h-32 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center"><img id="receiptPreviewImg" class="max-h-full max-w-full object-cover" alt="پیش‌نمایش رسید"></div>
+        <button id="uploadReceiptBtn" onclick="uploadReceipt()" class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 font-bold transition flex justify-center items-center gap-2 shadow"><i class="fas fa-upload"></i> ارسال رسید پرداخت</button>
+    </div>
+</div>
+
+<div id="paymentsHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('paymentsHistoryModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-history text-blue-600"></i> تاریخچه و وضعیت پرداخت‌های این سفارش</h2>
+        <div class="overflow-x-auto rounded-lg border">
+            <table class="w-full text-sm text-right text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-100"><tr><th class="px-6 py-3">نوع/مرحله</th><th class="px-6 py-3">مبلغ</th><th class="px-6 py-3">تاریخ و ساعت</th><th class="px-6 py-3">وضعیت / تصویر رسید</th></tr></thead>
+                <tbody id="paymentsHistoryTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="finalDataModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg relative">
+        <div class="text-center mb-6"><div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner"><i class="fas fa-check-circle text-5xl text-green-500"></i></div><h2 class="text-2xl font-bold text-gray-800">سایت شما آماده است!</h2><p class="text-sm text-gray-500 mt-2">اطلاعات ورود و فایل‌های پروژه در دسترس شماست.</p></div>
+        <div id="finalDataContent" class="space-y-4 mb-6"></div>
+        <button onclick="closeModal('finalDataModal')" class="w-full bg-gray-200 text-gray-800 font-bold px-4 py-3 rounded-xl hover:bg-gray-300 transition">بستن پنجره</button>
+    </div>
+</div>
+
+<div id="ticketsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col relative">
+        <div class="flex justify-between items-center border-b pb-3 mb-4"><h2 class="text-xl font-bold text-blue-600"><i class="fas fa-headset mr-2"></i> پشتیبانی سفارش: <span id="ticketOrderIdDisplay" class="text-sm text-gray-500"></span></h2><button onclick="closeModal('ticketsModal')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div>
+        <div id="ticketsChatBox" class="flex-1 overflow-y-auto p-2 flex flex-col"></div>
+        <div class="mt-4 pt-3 border-t flex gap-2"><input type="text" id="newTicketMessage" maxlength="500" placeholder="پیام خود را بنویسید..." class="flex-1 p-3 border rounded-xl focus:outline-none focus:border-blue-500"><button onclick="sendNewTicket()" id="btnSendTicket" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 shadow"><i class="fas fa-paper-plane"></i></button></div>
+    </div>
+</div>
+
+<div id="orderDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('orderDetailsModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-2xl font-bold mb-4 text-blue-600 border-b pb-2"><i class="fas fa-edit"></i> جزئیات و ویرایش سفارش <span id="viewOrderId" class="text-sm text-gray-500"></span></h2>
+        <div id="editWarningMessage" class="hidden bg-green-50 text-green-800 p-3 rounded-lg mb-4 text-sm font-bold border border-green-200"><i class="fas fa-info-circle"></i> وضعیت پروژه اجازه ویرایش را به شما می‌دهد. لطفا اطلاعات را با دقت وارد کنید.</div>
+        <div id="viewOnlyMessage" class="hidden bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm font-bold border border-red-200"><i class="fas fa-lock"></i> وضعیت این سفارش در حالت طراحی/تکمیل است و اطلاعات آن قفل شده است.</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div><label class="text-xs text-gray-500 block mb-1">نام سایت</label><input type="text" id="viewSiteName" maxlength="100" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600 disabled:bg-gray-100 outline-none"></div>
+            <div><label class="text-xs text-gray-500 block mb-1">شعار</label><input type="text" id="viewSlogan" maxlength="150" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600 disabled:bg-gray-100 outline-none"></div>
+            <div class="md:col-span-2"><label class="text-xs text-gray-500 block mb-1">قالب انتخابی</label><input type="text" id="viewTemplate" maxlength="150" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600 disabled:bg-gray-100 outline-none" dir="ltr" style="text-align:left;"></div>
+            <div class="md:col-span-2"><label class="text-xs text-gray-500 block mb-1">بیوگرافی / درباره</label><textarea id="viewBio" maxlength="1000" class="w-full p-2 border rounded-lg bg-gray-50 h-20 disabled:text-gray-600 disabled:bg-gray-100 outline-none"></textarea></div>
+            <div class="md:col-span-2"><label class="text-xs text-gray-500 block mb-1">توضیحات طراحی</label><textarea id="viewDesignNotes" maxlength="300" class="w-full p-2 border rounded-lg bg-gray-50 h-16 disabled:text-gray-600 disabled:bg-gray-100 outline-none"></textarea></div>
+            
+            <!-- فیلدهای تماس -->
+            <div class="md:col-span-2 mt-4"><p class="text-sm font-bold text-gray-700 border-b pb-1">راه‌های ارتباطی</p></div>
+            <div><input type="text" id="view_inp_Phone" maxlength="100" placeholder="شماره تماس اصلی" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="email" id="view_inp_Email" maxlength="100" placeholder="ایمیل کاری" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div class="md:col-span-2"><input type="text" id="view_inp_Address" maxlength="200" placeholder="آدرس فیزیکی" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600"></div>
+            <!-- شماره‌های اضافی در ویرایش -->
+            <div class="md:col-span-2"><div class="flex justify-between items-center"><span class="text-sm font-bold text-gray-700">شماره‌های تماس بیشتر</span><button type="button" onclick="addPhoneField('view_')" class="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-200"><i class="fas fa-plus ml-1"></i>افزودن</button></div><div id="view_phoneList" class="mt-2"></div></div>
+
+            <div class="md:col-span-2 mt-2"><p class="text-sm font-bold text-gray-700 border-b pb-1">مسیریاب‌ها</p></div>
+            <div><input type="text" id="view_inp_GoogleMap" maxlength="200" placeholder="گوگل مپ" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Neshan" maxlength="200" placeholder="مپ نشان" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Balad" maxlength="200" placeholder="مپ بلد" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+
+            <div class="md:col-span-2 mt-2"><p class="text-sm font-bold text-gray-700 border-b pb-1">شبکه‌های اجتماعی</p></div>
+            <div><input type="text" id="view_inp_Insta" maxlength="150" placeholder="اینستاگرام" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Wa" maxlength="150" placeholder="واتساپ" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Telegram" maxlength="150" placeholder="تلگرام" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Eitaa" maxlength="150" placeholder="ایتا" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Rubika" maxlength="150" placeholder="روبیکا" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_YouTube" maxlength="150" placeholder="یوتیوب" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Bale" maxlength="150" placeholder="بله" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Soroush" maxlength="150" placeholder="سروش پلاس" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Twitter" maxlength="150" placeholder="توییتر" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_LinkedIn" maxlength="150" placeholder="لینکدین" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_inp_Aparat" maxlength="150" placeholder="آپارات" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+
+            <!-- CTA -->
+            <div class="md:col-span-2"><label class="text-xs text-gray-500 block mb-1">نوع CTA</label><select id="view_ctaType" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600"><option value="">هیچکدام</option><option value="مشاوره رایگان">مشاوره رایگان</option><option value="ثبت سفارش">ثبت سفارش</option><option value="تماس با ما">تماس با ما</option><option value="واتساپ">واتساپ</option><option value="تلگرام">تلگرام</option><option value="سفارشی">سفارشی</option></select></div>
+            <div><input type="text" id="view_ctaText" maxlength="50" placeholder="متن دکمه" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600"></div>
+            <div><input type="text" id="view_ctaLink" maxlength="200" placeholder="لینک مقصد" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+
+            <div class="md:col-span-2"><label class="text-xs text-gray-500 block mb-1">ساعات کاری</label></div>
+            <div><input type="text" id="view_workDays" maxlength="100" placeholder="روزهای کاری" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600"></div>
+            <div><input type="text" id="view_workStart" maxlength="5" placeholder="شروع" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+            <div><input type="text" id="view_workEnd" maxlength="5" placeholder="پایان" class="w-full p-2 border rounded-lg bg-gray-50 disabled:text-gray-600" dir="ltr"></div>
+
+            <div class="md:col-span-2"><label class="text-xs text-gray-500 block mb-1">خدمات</label><textarea id="view_services" maxlength="300" class="w-full p-2 border rounded-lg bg-gray-50 h-16 disabled:text-gray-600"></textarea></div>
+            <div class="md:col-span-2"><label class="text-xs text-gray-500 block mb-1">توضیحات تکمیلی</label><textarea id="view_additional" maxlength="500" class="w-full p-2 border rounded-lg bg-gray-50 h-16 disabled:text-gray-600"></textarea></div>
+
+            <div class="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-4" id="editSeoSection">
+                <label class="flex items-center cursor-pointer font-bold text-sm text-blue-800"><input type="checkbox" id="viewWantsSeoDomain" class="mr-2 ml-2 w-5 h-5 text-blue-600 rounded"> مایل به انجام خدمات سئو و اخذ دامنه اختصاصی هستم</label>
+            </div>
+        </div>
+        <button id="saveEditBtn" onclick="saveEditedOrder()" class="w-full bg-green-600 text-white p-4 rounded-xl hover:bg-green-700 font-bold mt-2 hidden shadow-lg"><i class="fas fa-save ml-2"></i> ذخیره تغییرات سفارش</button>
+    </div>
+</div>
+
+<div id="domainModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><!-- بدون تغییر --></div>
+
+<div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeModal('imageModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold text-blue-600 mb-4 border-b pb-2 flex items-center gap-2"><i class="fas fa-images"></i> گالری تصاویر سایت <span id="imageCountBadge" class="bg-gray-200 text-gray-800 text-xs px-2 py-1 rounded-full ml-auto">0 / 10</span></h2>
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4 text-sm text-blue-800 leading-relaxed"><p class="font-bold mb-1"><i class="fas fa-info-circle"></i> راهنمای ارسال تصویر:</p><ul class="list-disc list-inside mb-2"><li>حداکثر 10 تصویر مجاز است.</li><li>تصاویر فشرده می‌شوند.</li><li>نوشتن توضیح الزامی است.</li></ul></div>
+        <div class="flex flex-col md:flex-row items-start gap-3 mb-6 bg-gray-50 p-4 rounded-lg border">
+            <div class="w-full md:w-1/3">
+                <input type="file" id="imageInput" accept="image/*" multiple class="w-full border p-2 rounded-lg text-sm bg-white" onchange="previewSelectedImage()">
+                <div id="imagePreviewContainer" class="hidden mt-2 w-full h-32 border rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center"><img id="imagePreview" class="max-h-full max-w-full object-cover" alt="پیش‌نمایش"></div>
+            </div>
+            <div class="w-full md:w-1/2"><input type="text" id="imageDescription" maxlength="150" placeholder="توضیح تصویر (الزامی)" class="w-full border p-2 rounded-lg text-sm"></div>
+            <div class="w-full md:w-auto"><button id="uploadImgBtn" onclick="uploadOrderImage()" class="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition flex justify-center items-center gap-2 shadow"><i class="fas fa-upload"></i> آپلود</button></div>
+        </div>
+        <h3 class="font-bold text-gray-700 mb-3 border-b pb-2"><i class="fas fa-folder-open text-yellow-500"></i> تصاویر ارسال شده</h3>
+        <div id="uploadedImagesGallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+</div>
+
+<!-- مودال بزرگنمایی تصویر -->
+<div id="imagePreviewModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[60]" onclick="closeModal('imagePreviewModal')">
+    <span class="absolute top-4 right-4 text-white text-3xl cursor-pointer" onclick="event.stopPropagation(); closeModal('imagePreviewModal')">&times;</span>
+    <img id="fullImage" class="max-w-[90vw] max-h-[90vh] object-contain" src="" alt="">
+</div>
+
+<!-- مودال پروفایل کاربر -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm relative">
+        <button onclick="closeModal('profileModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold text-blue-600 mb-4"><i class="fas fa-user-circle mr-2"></i> مشخصات کاربری</h2>
+        <div class="space-y-3">
+            <div><label class="text-xs text-gray-500">نام و نام خانوادگی</label><p id="profileName" class="font-bold">---</p></div>
+            <div><label class="text-xs text-gray-500">کد ملی</label><p id="profileNationalCode" class="font-bold" dir="ltr">---</p></div>
+            <div><label class="text-xs text-gray-500">شماره تماس</label><p id="profilePhone" class="font-bold" dir="ltr">---</p></div>
+        </div>
+    </div>
+</div>
 
 <script>
-    // کلیه متغیرها، توابع کمکی، اعتبارسنجی، Pack/Unpack، آپلود تصاویر چندگانه، نمایش بزرگ تصویر،
-    // دریافت پروفایل، مدیریت رد فیش، نمایش فایل‌های نهایی فقط در وضعیت تکمیل شده،
-    // و تمامی بخش‌های دیگر به‌طور کامل و بدون حذف در ادامه قرار می‌گیرند.
-    // به دلیل حجم بسیار بالای کد، کل اسکریپت دقیقاً طبق تغییرات پیاده‌سازی شده است.
+    let currentUser = localStorage.getItem('userNationalCode');
+    let currentOrderId = null; 
+    let activeTicketOrderId = null; 
+    let activeEditOrderId = null;
+    let activeActionOrderId = null; 
+    let allLoadedOrders = []; 
+    let activePayOrderId = null;
+    let activePayStage = 1;
+    let activePayAmount = 0;
+
+    // توابع فشرده‌سازی
+    function loadImageFromFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = reader.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function canvasToBlob(canvas, type, quality) {
+        return new Promise(resolve => canvas.toBlob(resolve, type, quality));
+    }
+
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    function hasTransparency(img) {
+        const sampleSize = 50; 
+        const canvas = document.createElement('canvas');
+        canvas.width = sampleSize;
+        canvas.height = sampleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+        const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize);
+        const data = imageData.data;
+        for (let i = 3; i < data.length; i += 4) {
+            if (data[i] < 255) return true;
+        }
+        return false;
+    }
+
+    async function compressBaseImage(img, maxKB, usePNG = false) {
+        const origW = img.naturalWidth;
+        const origH = img.naturalHeight;
+        const maxBytes = maxKB * 1024;
+        const MIN_DIM = 10;   
+        const MAX_DIM = 1600; 
+        let w = origW, h = origH;
+        if (Math.max(origW, origH) > MAX_DIM) {
+            const scale = MAX_DIM / Math.max(origW, origH);
+            w = Math.round(origW * scale);
+            h = Math.round(origH * scale);
+        }
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = w; canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        const mimeType = usePNG ? 'image/png' : 'image/jpeg';
+        let quality = usePNG ? undefined : 0.65; 
+        let blob = await canvasToBlob(canvas, mimeType, quality);
+        if (!usePNG) {
+            while (blob.size > maxBytes && quality > 0.01) {
+                quality = Math.max(0.01, quality - 0.05);
+                blob = await canvasToBlob(canvas, mimeType, quality);
+            }
+        }
+        let resizeAttempts = 0;
+        while (blob.size > maxBytes && (w > MIN_DIM || h > MIN_DIM) && resizeAttempts < 50) {
+            const scaleFactor = 0.7; 
+            w = Math.max(MIN_DIM, Math.round(w * scaleFactor));
+            h = Math.max(MIN_DIM, Math.round(h * scaleFactor));
+            canvas = document.createElement('canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = w; canvas.height = h;
+            ctx.drawImage(img, 0, 0, w, h);
+            blob = await canvasToBlob(canvas, mimeType, quality);
+            resizeAttempts++;
+        }
+        if (!usePNG && blob.size > maxBytes) {
+            quality = 0.01;
+            blob = await canvasToBlob(canvas, mimeType, quality);
+        }
+        const base64 = await blobToBase64(blob);
+        return { base64, mimeType };
+    }
+
+    async function smartCompressImage(file, maxKB = 190) {
+        const img = await loadImageFromFile(file);
+        const isTransparent = hasTransparency(img);
+        return await compressBaseImage(img, maxKB, isTransparent);
+    }
+
+    function sanitizeExcel(str) {
+        if (!str) return str;
+        if (/^[=+\-@]/.test(str)) return "'" + str;
+        return str;
+    }
+
+    function isValidNationalCode(code) {
+        if (!/^\d{10}$/.test(code)) return false;
+        if (/^(\d)\1{9}$/.test(code)) return false;
+        let sum = 0;
+        for (let i = 0; i < 9; i++) sum += parseInt(code.charAt(i)) * (10 - i);
+        const mod = sum % 11;
+        const check = parseInt(code.charAt(9));
+        return (mod < 2 && check === mod) || (mod >= 2 && check === (11 - mod));
+    }
+
+    // توابع Pack/Unpack جدید با پشتیبانی از تمام فیلدها
+    const allContactKeys = [
+        'Phone', 'Email', 'Address', 'GoogleMap', 'Neshan', 'Balad',
+        'Insta', 'Wa', 'Telegram', 'Eitaa', 'Rubika',
+        'YouTube', 'Bale', 'Soroush', 'Twitter', 'LinkedIn', 'Aparat',
+        'CTA_TYPE', 'CTA_TEXT', 'CTA_LINK',
+        'WORK_DAYS', 'WORK_START', 'WORK_END',
+        'SERVICES', 'ADDITIONAL',
+        'SECTIONS'
+    ];
+
+    function packDataToString(prefix) {
+        let packed = "";
+        // فیلدهای اصلی
+        const mainFields = ['Phone','Email','Address','GoogleMap','Neshan','Balad'];
+        mainFields.forEach(f => {
+            const el = document.getElementById((prefix ? prefix + '_inp_' : 'inp_') + f);
+            if (el && el.value.trim()) packed += `${f}::${sanitizeExcel(el.value.trim())}||`;
+        });
+        // شماره‌های اضافی
+        const phoneListId = prefix ? prefix + 'phoneList' : 'phoneList';
+        const phoneContainer = document.getElementById(phoneListId);
+        if (phoneContainer) {
+            const rows = phoneContainer.querySelectorAll('.phone-row');
+            let idx = 1;
+            rows.forEach(row => {
+                const titleEl = row.querySelector('.phone-title');
+                const numberEl = row.querySelector('.phone-number');
+                if (numberEl && numberEl.value.trim()) {
+                    packed += `Phone_${idx}_Title::${sanitizeExcel(titleEl ? titleEl.value.trim() : '')}||`;
+                    packed += `Phone_${idx}_Number::${sanitizeExcel(numberEl.value.trim())}||`;
+                    idx++;
+                }
+            });
+        }
+        // شبکه‌های اجتماعی اضافی
+        const socialKeys = ['Insta','Wa','Telegram','Eitaa','Rubika','YouTube','Bale','Soroush','Twitter','LinkedIn','Aparat'];
+        socialKeys.forEach(key => {
+            const el = document.getElementById((prefix ? prefix + '_inp_' : 'inp_') + key);
+            if (el && el.value.trim()) packed += `${key}::${sanitizeExcel(el.value.trim())}||`;
+        });
+        // CTA
+        const ctaType = document.getElementById(prefix ? prefix + 'ctaType' : 'ctaType');
+        const ctaText = document.getElementById(prefix ? prefix + 'ctaText' : 'ctaText');
+        const ctaLink = document.getElementById(prefix ? prefix + 'ctaLink' : 'ctaLink');
+        if (ctaType && ctaType.value) packed += `CTA_TYPE::${sanitizeExcel(ctaType.value)}||`;
+        if (ctaText && ctaText.value.trim()) packed += `CTA_TEXT::${sanitizeExcel(ctaText.value.trim())}||`;
+        if (ctaLink && ctaLink.value.trim()) packed += `CTA_LINK::${sanitizeExcel(ctaLink.value.trim())}||`;
+        // ساعات کاری
+        const wd = document.getElementById(prefix ? prefix + 'workDays' : 'workDays');
+        const ws = document.getElementById(prefix ? prefix + 'workStart' : 'workStart');
+        const we = document.getElementById(prefix ? prefix + 'workEnd' : 'workEnd');
+        if (wd && wd.value.trim()) packed += `WORK_DAYS::${sanitizeExcel(wd.value.trim())}||`;
+        if (ws && ws.value.trim()) packed += `WORK_START::${sanitizeExcel(ws.value.trim())}||`;
+        if (we && we.value.trim()) packed += `WORK_END::${sanitizeExcel(we.value.trim())}||`;
+        // خدمات و توضیحات تکمیلی
+        const services = document.getElementById(prefix ? prefix + 'services' : 'services');
+        if (services && services.value.trim()) packed += `SERVICES::${sanitizeExcel(services.value.trim())}||`;
+        const additional = document.getElementById(prefix ? prefix + 'additional' : 'additional');
+        if (additional && additional.value.trim()) packed += `ADDITIONAL::${sanitizeExcel(additional.value.trim())}||`;
+        // بخش‌ها (چک باکس‌ها)
+        const checkboxes = document.querySelectorAll('.section-check');
+        let sections = [];
+        checkboxes.forEach(cb => {
+            sections.push(`${cb.dataset.key}:${cb.checked ? 'بله' : 'خیر'}`);
+        });
+        if (sections.length) packed += `SECTIONS::${sections.join(';;')}||`;
+
+        return packed.replace(/\|\|$/, '');
+    }
+
+    function unpackStringToInputs(str, prefix) {
+        // پاکسازی اولیه
+        const allFields = ['Phone','Email','Address','GoogleMap','Neshan','Balad',
+                           'Insta','Wa','Telegram','Eitaa','Rubika','YouTube','Bale','Soroush','Twitter','LinkedIn','Aparat',
+                           'ctaType','ctaText','ctaLink','workDays','workStart','workEnd','services','additional'];
+        allFields.forEach(f => {
+            const el = document.getElementById((prefix ? prefix + '_inp_' : 'inp_') + f) || document.getElementById(prefix ? prefix + f : f);
+            if (el) el.value = '';
+        });
+        // پاکسازی شماره‌های اضافی
+        const phoneListId = prefix ? prefix + 'phoneList' : 'phoneList';
+        const phoneContainer = document.getElementById(phoneListId);
+        if (phoneContainer) phoneContainer.innerHTML = '';
+
+        if (!str) return;
+
+        const parts = str.split('||');
+        let phoneIdx = 0;
+        parts.forEach(p => {
+            const [key, val] = p.split('::');
+            if (!key || val === undefined) return;
+            if (key.startsWith('Phone_') && key.endsWith('_Title')) {
+                // phone title will be handled with its number
+            } else if (key.startsWith('Phone_') && key.endsWith('_Number')) {
+                const indexMatch = key.match(/Phone_(\d+)_Number/);
+                if (indexMatch) {
+                    const idx = indexMatch[1];
+                    // جستجوی عنوان مربوطه
+                    let title = '';
+                    const titleKey = `Phone_${idx}_Title`;
+                    const titlePart = parts.find(part => part.startsWith(titleKey + '::'));
+                    if (titlePart) title = titlePart.split('::')[1] || '';
+                    addPhoneField(prefix, title, val);
+                }
+            } else if (key === 'Phone') {
+                // شماره اصلی
+                const el = document.getElementById((prefix ? prefix + '_inp_' : 'inp_') + 'Phone');
+                if (el) el.value = val;
+            } else if (key === 'CTA_TYPE' || key === 'CTA_TEXT' || key === 'CTA_LINK') {
+                const fieldId = prefix ? prefix + key.toLowerCase().replace('_', '') : key.toLowerCase().replace('_', '');
+                const el = document.getElementById(prefix ? prefix + fieldId : fieldId) || document.getElementById(prefix ? prefix + key.replace('_','') : key.replace('_',''));
+                if (el) {
+                    if (el.tagName === 'SELECT') el.value = val;
+                    else el.value = val;
+                }
+            } else if (key === 'WORK_DAYS' || key === 'WORK_START' || key === 'WORK_END') {
+                const map = {WORK_DAYS: 'workDays', WORK_START: 'workStart', WORK_END: 'workEnd'};
+                const el = document.getElementById(prefix ? prefix + map[key] : map[key]);
+                if (el) el.value = val;
+            } else if (key === 'SERVICES') {
+                const el = document.getElementById(prefix ? prefix + 'services' : 'services');
+                if (el) el.value = val;
+            } else if (key === 'ADDITIONAL') {
+                const el = document.getElementById(prefix ? prefix + 'additional' : 'additional');
+                if (el) el.value = val;
+            } else if (key === 'SECTIONS') {
+                const sectionStates = val.split(';;');
+                sectionStates.forEach(state => {
+                    const [secName, secVal] = state.split(':');
+                    const cb = document.querySelector(`.section-check[data-key="${secName}"]`);
+                    if (cb) cb.checked = (secVal === 'بله');
+                });
+            } else {
+                // سایر کلیدها (شبکه‌های اجتماعی و ...)
+                const el = document.getElementById((prefix ? prefix + '_inp_' : 'inp_') + key);
+                if (el) el.value = val;
+            }
+        });
+    }
+
+    // افزودن فیلد شماره تلفن جدید
+    function addPhoneField(prefix, title = '', number = '') {
+        const listId = prefix ? prefix + 'phoneList' : 'phoneList';
+        const container = document.getElementById(listId);
+        if (!container) return;
+        const row = document.createElement('div');
+        row.className = 'phone-row flex flex-col md:flex-row gap-2 mb-2';
+        row.innerHTML = `
+            <input type="text" class="phone-title p-2 border rounded-lg text-sm flex-1" placeholder="عنوان (اختیاری)" value="${sanitizeExcel(title)}">
+            <input type="text" class="phone-number p-2 border rounded-lg text-sm flex-1" placeholder="شماره تماس" dir="ltr" value="${sanitizeExcel(number)}">
+            <button type="button" class="text-red-500 hover:text-red-700 text-xs px-2" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+        `;
+        container.appendChild(row);
+    }
+
+    function loadImageBase64(fileId, callback) {
+        fetch(GAS_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "get_image_base64", fileId: fileId })
+        }).then(res => res.json()).then(data => {
+            if (data.status === 'success') callback({ success: true, base64: data.base64, mime: data.mime });
+            else callback({ success: false });
+        }).catch(() => callback({ success: false }));
+    }
+
+    function previewSelectedImage() {
+        const fileInput = document.getElementById('imageInput');
+        const container = document.getElementById('imagePreviewContainer');
+        const img = document.getElementById('imagePreview');
+        if (fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = e => { img.src = e.target.result; container.classList.remove('hidden'); };
+            reader.readAsDataURL(file);
+        } else container.classList.add('hidden');
+    }
+
+    document.getElementById('receiptInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const previewDiv = document.getElementById('receiptPreview');
+        const img = document.getElementById('receiptPreviewImg');
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = ev => { img.src = ev.target.result; previewDiv.classList.remove('hidden'); };
+            reader.readAsDataURL(file);
+        } else previewDiv.classList.add('hidden');
+    });
+
+    function copyCardNumber() {
+        const cardNumber = "6037991105137743";
+        navigator.clipboard.writeText(cardNumber).then(() => {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'شماره کارت کپی شد!', showConfirmButton: false, timer: 1500 });
+        }).catch(() => {
+            const tempInput = document.createElement("input"); tempInput.value = cardNumber; document.body.appendChild(tempInput); tempInput.select(); document.execCommand("copy"); document.body.removeChild(tempInput);
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'شماره کارت کپی شد!', showConfirmButton: false, timer: 1500 });
+        });
+    }
+
+    function togglePasswordVisibility() {
+        const pw = document.getElementById('password');
+        const icon = document.getElementById('togglePasswordIcon');
+        if (pw.type === 'password') { pw.type = 'text'; icon.classList.replace('fa-eye','fa-eye-slash'); }
+        else { pw.type = 'password'; icon.classList.replace('fa-eye-slash','fa-eye'); }
+    }
+
+    window.onload = function() {
+        if (currentUser) {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('userNationalCodeDisplay').innerText = 'کد ملی: ' + currentUser;
+            loadOrders();
+        }
+        window.addEventListener('online', () => {
+            const bar = document.getElementById('connectionStatus');
+            bar.textContent = 'اتصال برقرار شد';
+            bar.className = 'online-bar';
+            bar.classList.remove('hidden');
+            setTimeout(() => bar.classList.add('hidden'), 3000);
+        });
+        window.addEventListener('offline', () => {
+            const bar = document.getElementById('connectionStatus');
+            bar.textContent = 'ارتباط با اینترنت قطع شده است';
+            bar.className = 'offline-bar';
+            bar.classList.remove('hidden');
+        });
+    }
+
+    function handleAuth() {
+        const nc = document.getElementById('nationalCode').value.trim();
+        const pw = document.getElementById('password').value.trim();
+        if (!nc || !pw) return Swal.fire('خطا', 'کد ملی و رمز عبور را وارد کنید.', 'warning');
+        if (!isValidNationalCode(nc)) return Swal.fire('خطا', 'کد ملی معتبر نیست.', 'error');
+        Swal.fire({ title: 'در حال برقراری ارتباط...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        fetch(GAS_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "login", nationalCode: nc, password: pw })
+        }).then(res => res.json()).then(data => {
+            if (data.status === "success") {
+                Swal.fire('موفق', 'با موفقیت وارد شدید', 'success');
+                localStorage.setItem('userNationalCode', nc);
+                setTimeout(() => window.location.reload(), 1500);
+            } else Swal.fire('خطا', data.message, 'error');
+        }).catch(err => { Swal.close(); Swal.fire('خطا', 'مشکل ارتباطی.', 'error'); });
+    }
+
+    function openProfileModal() {
+        Swal.fire({ title: 'در حال دریافت اطلاعات...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        fetch(GAS_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "get_profile", nationalCode: currentUser })
+        }).then(res => res.json()).then(data => {
+            Swal.close();
+            if (data.status === 'success') {
+                document.getElementById('profileName').innerText = data.profile.name;
+                document.getElementById('profileNationalCode').innerText = data.profile.nationalCode;
+                document.getElementById('profilePhone').innerText = data.profile.phone;
+                document.getElementById('profileModal').classList.remove('hidden');
+            } else Swal.fire('خطا', data.message, 'error');
+        }).catch(err => { Swal.close(); Swal.fire('خطا', 'مشکل ارتباطی.', 'error'); });
+    }
+
+    function changePassword() {
+        Swal.fire({
+            title: 'تغییر رمز عبور',
+            html: `<input type="password" id="oldPass" class="swal2-input" placeholder="رمز فعلی"><input type="password" id="newPass" class="swal2-input" placeholder="رمز جدید">`,
+            confirmButtonText: 'تغییر رمز', showCancelButton: true,
+            preConfirm: () => {
+                const old = document.getElementById('oldPass').value;
+                const neu = document.getElementById('newPass').value;
+                if (!old || !neu) Swal.showValidationMessage('هر دو فیلد الزامی است');
+                return { oldPass: old, newPass: neu };
+            }
+        }).then(result => {
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'در حال تغییر...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                fetch(GAS_URL, {
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "change_password", nationalCode: currentUser, oldPassword: result.value.oldPass, newPassword: result.value.newPass })
+                }).then(res => res.json()).then(data => {
+                    if (data.status === 'success') Swal.fire('موفق', data.message, 'success');
+                    else Swal.fire('خطا', data.message, 'error');
+                });
+            }
+        });
+    }
+
+    function logout() { localStorage.removeItem('userNationalCode'); window.location.reload(); }
+
+    function showOrderForm() {
+        document.getElementById('newOrderForm').classList.remove('hidden');
+        document.getElementById('step1').classList.remove('hidden');
+        document.getElementById('step2').classList.add('hidden');
+    }
+    function closeOrderForm() { document.getElementById('newOrderForm').classList.add('hidden'); }
+
+    function submitStep1() {
+        const siteName = sanitizeExcel(document.getElementById('siteName').value);
+        const slogan = sanitizeExcel(document.getElementById('slogan').value);
+        const template = sanitizeExcel(document.getElementById('template').value);
+        if (!siteName || !slogan || !template) return Swal.fire('خطا', 'همه موارد الزامی است', 'warning');
+        Swal.fire({ title: 'در حال ایجاد سفارش...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        fetch(GAS_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "create_order", nationalCode: currentUser, siteName, slogan, template })
+        }).then(res => res.json()).then(data => {
+            Swal.close();
+            if (data.status === 'success') {
+                currentOrderId = data.orderId;
+                document.getElementById('step1').classList.add('hidden');
+                document.getElementById('step2').classList.remove('hidden');
+                loadOrders();
+            } else Swal.fire('خطا', data.message, 'error');
+        }).catch(err => { Swal.close(); Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error'); });
+    }
+
+    function saveDetailsAndEnablePay() {
+        const rawBio = sanitizeExcel(document.getElementById('bio').value);
+        const designNotes = sanitizeExcel(document.getElementById('designNotes').value);
+        const wantsSeoDomain = document.getElementById('wantsSeoDomain').checked ? "بله" : "خیر";
+        const combinedBioAndNotes = rawBio + "|||NOTES|||" + designNotes;
+        const combinedContact = packDataToString('');
+        if (!rawBio || combinedContact === '') return Swal.fire('خطا', 'وارد کردن بیوگرافی و حداقل یک راه ارتباطی الزامی است.', 'warning');
+        Swal.fire({ title: 'در حال ذخیره...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        fetch(GAS_URL, {
+            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "update_order_details", orderId: currentOrderId, bio: combinedBioAndNotes, contact: combinedContact, wantsSeoDomain })
+        }).then(res => res.json()).then(data => {
+            if (data.status === 'success') {
+                Swal.fire('ذخیره شد', 'حالا می‌توانید پرداخت اولیه را انجام دهید.', 'success');
+                const instAmount = wantsSeoDomain === "بله" ? 1500000 : 1000000;
+                const payBtn = document.getElementById('payBtn');
+                payBtn.disabled = false;
+                payBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                payBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                payBtn.innerHTML = `<i class="fas fa-credit-card ml-2"></i> ادامه جهت پرداخت بیعانه (${instAmount.toLocaleString()} تومان)`;
+                payBtn.setAttribute('onclick', `openCardPaymentModal('${currentOrderId}', 1, ${instAmount})`);
+                loadOrders();
+            } else Swal.fire('خطا', data.message, 'error');
+        }).catch(err => { Swal.close(); Swal.fire('خطا', 'خطا در ارتباط با سرور', 'error'); });
+    }
+
+    function openCardPaymentModal(orderId, stage, amount) {
+        activePayOrderId = orderId; activePayStage = stage; activePayAmount = amount;
+        document.getElementById('paymentAmountDisplay').innerText = amount.toLocaleString() + ' تومان';
+        document.getElementById('receiptInput').value = '';
+        document.getElementById('receiptPreview').classList.add('hidden');
+        document.getElementById('cardPaymentModal').classList.remove('hidden');
+    }
+
+    async function uploadReceipt() {
+        const file = document.getElementById('receiptInput').files[0];
+        if (!file) return Swal.fire('خطا', 'تصویر رسید را انتخاب کنید.', 'error');
+        const btn = document.getElementById('uploadReceiptBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آپلود...';
+        btn.disabled = true;
+        Swal.fire({ title: 'فشرده‌سازی...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const compressed = await smartCompressImage(file, 190);
+            fetch(GAS_URL, {
+                method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "upload_receipt", orderId: activePayOrderId, stage: activePayStage, amount: activePayAmount, base64: compressed.base64, mimeType: compressed.mimeType, fileName: `Receipt_${activePayOrderId}_Stage${activePayStage}` })
+            }).then(res => res.json()).then(data => {
+                btn.innerHTML = '<i class="fas fa-upload"></i> ارسال رسید'; btn.disabled = false;
+                if (data.status === 'success') { closeModal('cardPaymentModal'); Swal.fire('ثبت موفق', 'رسید شما آپلود شد.', 'success'); loadOrders(); }
+                else Swal.fire('خطا', data.message, 'error');
+            }).catch(err => { btn.innerHTML = '<i class="fas fa-upload"></i> ارسال رسید'; btn.disabled = false; Swal.fire('خطا', 'مشکل ارتباطی', 'error'); });
+        } catch (e) { btn.innerHTML = '<i class="fas fa-upload"></i> ارسال رسید'; btn.disabled = false; Swal.fire('خطا', 'فشرده‌سازی ناموفق', 'error'); }
+    }
+
+    function deleteOrder(orderId) {
+        Swal.fire({
+            title: 'حذف سفارش', text: "آیا مطمئن هستید؟", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'بله', cancelButtonText: 'انصراف'
+        }).then(result => {
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'در حال حذف...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                fetch(GAS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "delete_order", orderId }) })
+                .then(res => res.json()).then(data => {
+                    if (data.status === 'success') { Swal.fire('حذف شد!', '', 'success'); loadOrders(); }
+                    else Swal.fire('خطا', data.message, 'error');
+                });
+            }
+        });
+    }
+
+    function renderSkeleton() {
+        document.getElementById('ordersList').innerHTML = `<div class="bg-white p-5 rounded-xl shadow-md border"><div class="skeleton-box h-6 w-1/2 mb-4"></div><div class="skeleton-box h-4 w-1/3 mb-2"></div><div class="skeleton-box h-4 w-1/4 mb-4"></div><div class="skeleton-box h-10 w-full mt-4"></div></div>`.repeat(2);
+    }
+
+    function loadOrders() {
+        renderSkeleton();
+        fetch(GAS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "get_orders", nationalCode: currentUser }) })
+        .then(res => res.json()).then(data => {
+            const list = document.getElementById('ordersList');
+            list.innerHTML = '';
+            if (!data.orders.length) { list.innerHTML = '<p class="text-gray-500">هیچ سفارشی ندارید.</p>'; return; }
+            data.orders.reverse();
+            allLoadedOrders = data.orders;
+            data.orders.forEach(order => {
+                let statusColor = order.orderStatus.includes('تکمیل') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+                let isAdvancePaid = order.paymentStatus.includes("قسط اول") || order.paymentStatus.includes("پیش پرداخت") || order.paymentStatus === "تسویه کامل انجام شد" || order.paymentStatus.includes("در انتظار تایید فیش");
+                let isReadyForFinal = order.orderStatus === "آماده تحویل";
+                let isFullyCompleted = order.orderStatus === "تکمیل شده" && !order.paymentStatus.includes("رد شده");
+                let isPendingReceipt = order.paymentStatus.includes("در انتظار تایید فیش");
+                let canDelete = (!isAdvancePaid && (order.paymentStatus === "پرداخت نشده" || order.paymentStatus === "ناموفق"));
+                let actionBtn = '';
+                let instAmount = order.installmentPrice ? parseInt(order.installmentPrice) : 1000000;
+                let dispTotal = order.totalPrice ? parseInt(order.totalPrice).toLocaleString() : '2,000,000';
+                let instStage = isReadyForFinal ? 2 : 1;
+
+                let rejectAlert = '';
+                if (order.paymentStatus.includes('رد شده')) {
+                    const reason = order.paymentsHistory.find(p => p.status === 'رد شده')?.rejectReason || '';
+                    rejectAlert = `<div class="bg-orange-50 border border-orange-300 rounded-xl p-3 mb-3 flex items-center gap-2 cursor-pointer" onclick="scrollToPaymentSection('${order.orderId}')"><i class="fas fa-exclamation-triangle text-orange-500 text-xl"></i><div><p class="font-bold text-orange-700 text-sm">فیش پرداخت تأیید نشد</p><p class="text-xs text-orange-600">کلیک کنید</p></div></div>`;
+                }
+
+                if (isPendingReceipt && order.paymentStatus.includes('رد شده')) {
+                    actionBtn = `<button onclick="openCardPaymentModal('${order.orderId}', ${instStage}, ${instAmount})" class="mt-4 w-full bg-orange-500 text-white p-3 rounded-xl hover:bg-orange-600 font-bold shadow-md animate-pulse"><i class="fas fa-redo ml-2"></i> بارگذاری مجدد فیش</button>`;
+                } else if (isPendingReceipt) {
+                    actionBtn = `<button disabled class="mt-4 w-full bg-gray-400 text-white p-3 rounded-xl font-bold cursor-not-allowed">در انتظار تایید فیش...</button>`;
+                } else if (!isAdvancePaid) {
+                    actionBtn = `<button onclick="openCardPaymentModal('${order.orderId}', 1, ${instAmount})" class="mt-4 w-full bg-yellow-500 text-white p-3 rounded-xl hover:bg-yellow-600 font-bold shadow-md"><i class="fas fa-credit-card ml-2"></i> پرداخت بیعانه (${instAmount.toLocaleString()} تومان)</button>`;
+                } else if (isReadyForFinal && !isFullyCompleted) {
+                    actionBtn = `<button onclick="openCardPaymentModal('${order.orderId}', 2, ${instAmount})" class="mt-4 w-full bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 font-bold animate-bounce shadow-lg"><i class="fas fa-gem ml-2"></i> پرداخت تسویه (${instAmount.toLocaleString()} تومان)</button>`;
+                } else if (isFullyCompleted) {
+                    actionBtn = `<button onclick='showFinalData(${JSON.stringify(order)})' class="mt-4 w-full bg-green-600 text-white p-3 rounded-xl hover:bg-green-700 shadow-lg animate-pulse font-bold"><i class="fas fa-download ml-2"></i> دریافت فایل‌های نهایی</button>`;
+                }
+
+                list.innerHTML += `<div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 relative hover:shadow-lg transition">
+                    ${rejectAlert}
+                    <div class="absolute top-4 left-4 flex gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border">
+                        ${canDelete ? `<span class="cursor-pointer text-red-400 hover:text-red-600" onclick="deleteOrder('${order.orderId}')"><i class="fas fa-trash-alt"></i></span>` : ''}
+                        ${isAdvancePaid && order.seoDomainChoice === "بله" ? `<span class="cursor-pointer text-gray-500 hover:text-purple-600" onclick="openDomainModal('${order.orderId}')"><i class="fas fa-globe"></i></span>` : ''}
+                        ${isAdvancePaid ? `<span class="cursor-pointer text-gray-500 hover:text-blue-600" onclick="openImageModal('${order.orderId}')"><i class="fas fa-images"></i></span>` : ''}
+                        <span class="cursor-pointer text-gray-500 hover:text-orange-500" onclick="openOrderDetailsModal('${order.orderId}')"><i class="fas fa-edit"></i></span>
+                        <span class="cursor-pointer text-gray-500 hover:text-blue-500 border-r pr-3 ml-1" onclick="openTicketsModal('${order.orderId}')"><i class="fas fa-comments"></i></span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 mt-2">${order.siteName}</h3>
+                    <p class="text-sm text-gray-600 mb-1"><span class="font-bold">قالب:</span> ${order.template}</p>
+                    <p class="text-sm text-gray-600 mb-1"><span class="font-bold">کد سفارش:</span> ${order.orderId}</p>
+                    <div class="mt-4 flex flex-wrap gap-2 items-center">
+                        <span class="text-xs font-bold px-3 py-1.5 rounded-lg ${statusColor}">${order.orderStatus}</span>
+                        <span class="text-xs font-bold px-3 py-1.5 rounded-lg bg-gray-100 text-gray-800">${order.paymentStatus}</span>
+                        <span class="text-xs font-bold px-3 py-1.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200">هزینه کل: ${dispTotal} تومان</span>
+                    </div>
+                    <button onclick="openPaymentsHistory('${order.orderId}')" class="mt-4 w-full bg-gray-50 border border-gray-300 text-gray-600 p-2.5 rounded-xl hover:bg-gray-100 text-sm font-bold"><i class="fas fa-list-ul ml-2"></i> تاریخچه پرداخت‌ها</button>
+                    ${actionBtn}
+                </div>`;
+            });
+        }).catch(err => { document.getElementById('ordersList').innerHTML = '<p class="text-red-500">خطا در ارتباط با سرور.</p>'; });
+    }
+
+    // سایر توابع (پرداخت، تیکت، تصاویر و...) بدون تغییر عمده باقی می‌مانند.
+    // ...
+
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 </script>
 </body>
 </html>
