@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -970,22 +969,22 @@
     }
 
     function showUserProfile() {
-        if(globalUserInfo) {
-            Swal.fire({
-                title: '<i class="fas fa-user-circle text-blue-600 text-4xl mb-2"></i><br>پروفایل شما',
-                html: `
-                    <div class="text-right bg-gray-50 p-4 rounded-lg border text-sm leading-loose">
-                        <p><span class="font-bold text-gray-700">نام و نام خانوادگی:</span> ${globalUserInfo.name}</p>
-                        <p><span class="font-bold text-gray-700">کد ملی:</span> ${globalUserInfo.natCode}</p>
-                        <p><span class="font-bold text-gray-700">شماره تماس:</span> ${globalUserInfo.phone}</p>
-                    </div>
-                `,
-                confirmButtonText: 'بستن',
-                confirmButtonColor: '#3085d6'
-            });
-        } else {
-            Swal.fire('خطا', 'اطلاعات کاربر هنوز بارگذاری نشده است.', 'error');
-        }
+        let name = (globalUserInfo && globalUserInfo.name && globalUserInfo.name !== "undefined") ? globalUserInfo.name : 'نامشخص';
+        let natCode = (globalUserInfo && globalUserInfo.natCode) ? globalUserInfo.natCode : currentUser;
+        let phone = (globalUserInfo && globalUserInfo.phone && globalUserInfo.phone !== "undefined") ? globalUserInfo.phone : 'ثبت نشده';
+
+        Swal.fire({
+            title: '<i class="fas fa-user-circle text-blue-600 text-4xl mb-2"></i><br>پروفایل شما',
+            html: `
+                <div class="text-right bg-gray-50 p-4 rounded-lg border text-sm leading-loose">
+                    <p><span class="font-bold text-gray-700">نام و نام خانوادگی:</span> ${name}</p>
+                    <p><span class="font-bold text-gray-700">کد ملی:</span> <span dir="ltr">${natCode}</span></p>
+                    <p><span class="font-bold text-gray-700">شماره تماس:</span> <span dir="ltr">${phone}</span></p>
+                </div>
+            `,
+            confirmButtonText: 'بستن',
+            confirmButtonColor: '#3085d6'
+        });
     }
 
     window.onload = function() {
