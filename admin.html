@@ -103,7 +103,7 @@
 </div>
 
 <script>
-    // لینک دیپلوی شده اسکریپت خود را اینجا قرار دهید:
+    // توجه: لینک را با لینک Deploy نهایی اسکریپت جایگزین کنید
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzTHtwA3Tn_Ak1pO11HmfRueMdTygFC_PggXGQ8HVJ7_vCg1Dxj3N0C-YwTFOWYw0Qn/exec"; 
 </script>
 
@@ -135,15 +135,13 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-indigo-900"><i class="fas fa-tasks ml-2"></i> لیست کل سفارشات سیستم</h1>
         </div>
-        <!-- تغییر placeholder به جستجوی کد ملی و شماره سفارش -->
         <input type="text" id="searchInput" onkeyup="handleSearch()" placeholder="جستجو بر اساس کد ملی یا شماره سفارش..." class="w-full mb-6 p-4 rounded-2xl shadow-sm border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-300 font-bold text-indigo-900">
         
-        <!-- مخزن نمایش دسته‌بندی شده -->
         <div id="ordersContainer"></div>
     </div>
 </div>
 
-<!-- مودال ایجاد کاربر جدید (کد ملی جایگزین ایمیل و رمز) -->
+<!-- مودال ایجاد کاربر جدید -->
 <div id="createUserModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-2xl w-full max-w-md relative shadow-2xl border-t-4 border-green-500">
         <button onclick="closeModal('createUserModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
@@ -157,7 +155,7 @@
     </div>
 </div>
 
-<!-- مودال نمایش مرتب متن برای کپی (بدون کد سفارش و...) -->
+<!-- مودال نمایش مرتب متن برای کپی -->
 <div id="copyDataModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
         <div class="p-4 border-b flex justify-between items-center bg-indigo-50 rounded-t-2xl">
@@ -298,25 +296,20 @@
 </div>
 
 <script>
-    // متغیرهای سراسری
     let allOrdersData = [];
     let currentOrderId = null;
     let adminToken = null;
 
-    // متغیرهای مربوط به رد فیش
     let pendingRejectOrderId = null;
     let pendingRejectRowIdx = null;
     let pendingRejectStage = null;
 
-    // کش برای کاهش درخواست‌های تکراری
     let ticketsCache = {};
     let imagesCache = {};
 
-    // ------------------------------ مدیریت نشست (Token) ------------------------------
     function checkSavedSession() {
         const token = sessionStorage.getItem('adminToken');
         if (!token) {
-            // بدون توکن: مخفی کردن لودینگ و نمایش فرم لاگین
             document.getElementById('initialLoading').classList.add('hidden');
             document.getElementById('adminAuthSection').classList.remove('hidden');
             return;
@@ -347,7 +340,6 @@
 
     window.addEventListener('load', checkSavedSession);
 
-    // ------------------------------ توابع کمکی ------------------------------
     function unpackContactForAdmin(str) {
         if(!str) return "اطلاعاتی ثبت نشده است.";
         let res = "";
@@ -376,7 +368,6 @@
 
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    // ------------------------------ اعتبارسنجی کد ملی ------------------------------
     function isValidIranianNationalCode(code) {
         if (!code || code.length !== 10 || !/^\d{10}$/.test(code)) return false;
         const check = parseInt(code[9]);
@@ -385,7 +376,6 @@
         return (remainder < 2 && check === remainder) || (remainder >= 2 && check === 11 - remainder);
     }
 
-    // ------------------------------ لاگین ------------------------------
     function handleAdminLogin() {
         const u = document.getElementById('adminUser').value;
         const p = document.getElementById('adminPass').value;
@@ -414,7 +404,6 @@
         location.reload();
     }
 
-    // ------------------------------ ایجاد کاربر جدید (با کد ملی) ------------------------------
     function openCreateUserModal() {
         document.getElementById('createUserModal').classList.remove('hidden');
     }
@@ -440,7 +429,6 @@
                 fullName: fullName,
                 nationalID: nationalID,
                 phone: phone,
-                email: nationalID,
                 password: nationalID
             })
         }).then(res => res.json()).then(d => {
@@ -456,11 +444,10 @@
         });
     }
 
-    // ------------------------------ آزادسازی فضای تصاویر قدیمی ------------------------------
     function freeUpSpace() {
         Swal.fire({
             title: 'آزادسازی فضای ذخیره‌سازی',
-            text: 'این عملیات تمام تصاویر و فیش‌های مربوط به پروژه‌های تکمیل شده (بیش از ۲۹ روز از تکمیل) را حذف می‌کند. ادامه می‌دهید؟',
+            text: 'این عملیات تمام تصاویر و فیش‌های مربوط به پروژه‌های تکمیل شده را حذف می‌کند. ادامه می‌دهید؟',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'بله، حذف کن',
@@ -477,7 +464,7 @@
                 .then(d => {
                     if(d.status === 'success') {
                         Swal.fire('موفق', d.message, 'success');
-                        loadAllData(); // رفرش لیست
+                        loadAllData(); 
                     } else {
                         Swal.fire('خطا', d.message, 'error');
                     }
@@ -487,12 +474,10 @@
         });
     }
 
-    // ------------------------------ لود داده‌ها با جستجوی سمت سرور ------------------------------
     function loadAllData(searchQuery = '') {
         const container = document.getElementById('ordersContainer');
         container.innerHTML = `<div class="skeleton-box h-32 w-full mb-4"></div><div class="skeleton-box h-32 w-full"></div>`;
         
-        // پاک کردن کش‌ها هنگام رفرش کلی
         ticketsCache = {};
         imagesCache = {};
 
@@ -520,7 +505,6 @@
         loadAllData(q);
     }
 
-    // ------------------------------ نمایش دسته‌بندی‌شده (تاشو) ------------------------------
     const statusOrder = [
         "ثبت اولیه",
         "در انتظار شروع انجام",
@@ -630,8 +614,8 @@
             userInfoHtml = `
                 <div class="text-xs text-gray-600 mt-1 border-t pt-2">
                     <p><strong>کاربر:</strong> ${order.user.fullName || '---'}</p>
-                    <p><strong>کد ملی:</strong> ${order.user.nationalID || '---'}</p>
-                    <p><strong>تلفن:</strong> ${order.user.phone || '---'}</p>
+                    <p><strong>کد ملی:</strong> ${order.nationalCode || '---'}</p>
+                    <p><strong>تلفن:</strong> <span dir="ltr">${order.user.phone || '---'}</span></p>
                 </div>`;
         }
 
@@ -642,7 +626,7 @@
                     <div>
                         <h3 class="font-bold text-lg text-indigo-900">${order.siteName || 'بدون نام'}</h3>
                         <p class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded inline-block mt-1">${order.orderId}</p>
-                        <p class="text-xs text-gray-600 mt-2 font-bold"><i class="fas fa-user text-gray-400"></i> ${order.email}</p>
+                        <p class="text-xs text-gray-600 mt-2 font-bold"><i class="fas fa-id-card text-gray-400"></i> ${order.nationalCode}</p>
                     </div>
                     <button onclick="generateAndShowText('${order.orderId}')" class="bg-indigo-50 text-indigo-600 p-3 rounded-xl hover:bg-indigo-600 hover:text-white transition shadow-sm" title="استخراج متن تمیز پروژه"><i class="fas fa-copy text-xl"></i></button>
                 </div>
@@ -667,7 +651,6 @@
         `;
     }
 
-    // ------------------------------ تولید متن کپی (بدون کد سفارش و...) ------------------------------
     function generateAndShowText(orderId) {
         const order = allOrdersData.find(o => o.orderId === orderId);
         if (!order) return;
@@ -713,7 +696,6 @@ ${contacts}
         });
     }
 
-    // ------------------------------ ویرایش وضعیت سفارش ------------------------------
     function openStatusModal(orderId) {
         currentOrderId = orderId;
         const order = allOrdersData.find(o => o.orderId === orderId);
@@ -754,7 +736,6 @@ ${contacts}
         });
     }
 
-    // ------------------------------ فیش‌ها (با نمایش Base64) ------------------------------
     function openReceiptsModal(orderId) {
         const order = allOrdersData.find(o => o.orderId === orderId);
         const container = document.getElementById('receiptsContainer');
@@ -799,7 +780,6 @@ ${contacts}
                         const imgContainer = receiptDiv.querySelector('.receipt-image-container');
                         if (imgContainer) {
                             imgContainer.innerHTML = `<img src="data:image/png;base64,${base64}" class="max-w-xs max-h-32 rounded-lg shadow cursor-pointer" alt="فیش">`;
-                            // اضافه کردن رویداد کلیک برای پیش‌نمایش
                             imgContainer.onclick = (e) => {
                                 e.stopPropagation();
                                 showImagePreview(base64);
@@ -822,20 +802,17 @@ ${contacts}
             if (data.status === 'success') {
                 callback(data.base64);
             } else {
-                console.error('Error loading image:', data.message);
                 callback(null);
             }
         })
         .catch(() => callback(null));
     }
 
-    // پیش‌نمایش تصویر بزرگ
     function showImagePreview(base64) {
         document.getElementById('previewImage').src = 'data:image/png;base64,' + base64;
         document.getElementById('imagePreviewModal').classList.remove('hidden');
     }
 
-    // ------------------------------ توابع رد فیش با دلیل ------------------------------
     function showRejectReasonModal(orderId, rowIdx, stage) {
         pendingRejectOrderId = orderId;
         pendingRejectRowIdx = rowIdx;
@@ -850,21 +827,12 @@ ${contacts}
     function confirmRejectReceipt() {
         const reason = document.getElementById('rejectReasonText').value.trim();
         if (!reason) {
-            return Swal.fire({
-                icon: 'warning',
-                title: 'خطا',
-                text: 'لطفاً دلیل رد شدن فیش را وارد کنید',
-                confirmButtonText: 'باشه'
-            });
+            return Swal.fire({ icon: 'warning', title: 'خطا', text: 'لطفاً دلیل رد شدن فیش را وارد کنید', confirmButtonText: 'باشه' });
         }
         
         closeModal('rejectReasonModal');
         
-        Swal.fire({
-            title: 'در حال ثبت رد فیش...',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
+        Swal.fire({ title: 'در حال ثبت رد فیش...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
         
         fetch(GAS_URL, {
             method: "POST",
@@ -881,13 +849,7 @@ ${contacts}
         .then(r => r.json())
         .then(d => {
             if (d.status === 'success') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'موفق',
-                    text: 'فیش با موفقیت رد شد و دلیل آن برای کاربر نمایش داده می‌شود.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                Swal.fire({ icon: 'success', title: 'موفق', text: 'فیش با موفقیت رد شد و دلیل آن برای کاربر نمایش داده می‌شود.', timer: 2000, showConfirmButton: false });
                 closeModal('receiptsModal');
                 loadAllData();
                 pendingRejectOrderId = null;
@@ -902,7 +864,6 @@ ${contacts}
         });
     }
 
-    // تابع تأیید فیش (بدون تغییر)
     function handleReceiptAdmin(orderId, rowIdx, newStatus, stage) {
         Swal.fire({title:'درحال اعمال...', didOpen:()=>Swal.showLoading()});
         fetch(GAS_URL, {
@@ -913,7 +874,6 @@ ${contacts}
         });
     }
 
-    // ------------------------------ گالری تصاویر (با کش و پیش‌نمایش) ------------------------------
     function openAdminImages(orderId) {
         const gallery = document.getElementById('adminImagesGallery');
         gallery.innerHTML = '';
@@ -922,11 +882,9 @@ ${contacts}
         if(!order.images || order.images.length === 0) {
             gallery.innerHTML = '<p class="col-span-full text-center text-gray-500 font-bold py-6">تصویری آپلود نشده است.</p>';
         } else {
-            // بررسی کش
             if (imagesCache[orderId]) {
                 renderCachedImages(orderId, gallery);
             } else {
-                // بارگذاری تمام تصاویر و کش کردن
                 let loadedCount = 0;
                 const total = order.images.length;
                 const cached = [];
@@ -953,7 +911,7 @@ ${contacts}
                         cached.push({id: img.id, desc: img.desc, base64: base64});
                         loadedCount++;
                         if (loadedCount === total) {
-                            imagesCache[orderId] = cached; // کش تصاویر کامل
+                            imagesCache[orderId] = cached; 
                         }
                     });
                 });
@@ -982,7 +940,6 @@ ${contacts}
         });
     }
 
-    // ------------------------------ تیکت‌ها (کش و بهبود) ------------------------------
     function refreshTickets(orderId, force = false) {
         if (!force && ticketsCache[orderId]) {
             renderTicketsFromCache(orderId);
@@ -1022,7 +979,6 @@ ${contacts}
 
     function openAdminTickets(orderId) {
         currentOrderId = orderId;
-        // بلافاصله چت‌باکس را خالی و لودینگ نشان بده
         document.getElementById('adminChatBox').innerHTML = '<div class="text-center mt-10"><div class="spinner mx-auto"></div><p class="text-gray-400 mt-2">در حال بارگذاری پیام‌ها...</p></div>';
         refreshTickets(orderId);
         document.getElementById('adminTicketsModal').classList.remove('hidden');
@@ -1032,7 +988,6 @@ ${contacts}
         const msg = document.getElementById('adminNewMsg').value.trim();
         if(!msg) return;
 
-        // پاک کردن فیلد بلافاصله
         document.getElementById('adminNewMsg').value = '';
 
         const chatBox = document.getElementById('adminChatBox');
@@ -1054,11 +1009,9 @@ ${contacts}
             method: "POST", body: JSON.stringify({action: "admin_reply_ticket", orderId: currentOrderId, message: msg})
         }).then(r=>r.json()).then(d=>{
             if(d.status==='success') {
-                // به‌روزرسانی کش
                 if (ticketsCache[currentOrderId]) {
                     ticketsCache[currentOrderId].push({ sender: "پشتیبانی ToWeb", message: msg, date: "همین الان" });
                 }
-                // جایگزینی spinner با تیک
                 const bubble = document.getElementById(tempMsgId);
                 if (bubble) {
                     bubble.querySelector('.spinner')?.remove();
@@ -1067,7 +1020,6 @@ ${contacts}
                         msgSpan.insertAdjacentHTML('afterend', ' <i class="fas fa-check checkmark"></i>');
                     }
                 }
-                // رفرش کش
                 refreshTickets(currentOrderId, true);
             } else {
                 const bubble = document.getElementById(tempMsgId);
