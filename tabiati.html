@@ -212,33 +212,47 @@
             justify-content: center;
         }
 
-        /* حلقه رنگی چرخان */
-        .color-ring {
-            position: relative;
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background: conic-gradient(from 0deg, #2e7d32 0deg, #2196f3 120deg, #f44336 240deg, #2e7d32 360deg);
-            animation: rotate-ring 2s linear infinite;
+        /* سه دایره رنگی لودینگ - زیر متن */
+        .loading-dots {
             display: flex;
+            gap: 14px;
+            margin-top: 2.5rem;
+            z-index: 1;
             align-items: center;
             justify-content: center;
-            margin-bottom: 2rem;
         }
 
-        /* دایره داخلی برای توخالی نشان دادن حلقه */
-        .color-ring::after {
-            content: "";
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            background: #0a290d;
+        .dot {
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
+            animation: bounce-dot 1.4s infinite ease-in-out both;
         }
 
-        @keyframes rotate-ring {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
+        .dot-1 {
+            background-color: #2e7d32;
+            animation-delay: -0.32s;
+        }
+
+        .dot-2 {
+            background-color: #2196f3;
+            animation-delay: -0.16s;
+        }
+
+        .dot-3 {
+            background-color: #f44336;
+            animation-delay: 0s;
+        }
+
+        @keyframes bounce-dot {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.4;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .welcome-text {
@@ -740,11 +754,16 @@
     <!-- ================= لایه خوش‌آمدگویی ================= -->
     <div id="welcome-overlay">
         <div class="welcome-container">
-            <div class="color-ring"></div>
             <div class="welcome-text">
                 <div class="logo-icon">🌿</div>
                 <h1>طبیعتی</h1>
                 <p>خلوص ناب طبیعت</p>
+            </div>
+            <!-- سه دایره رنگی لودینگ - زیر متن -->
+            <div class="loading-dots">
+                <span class="dot dot-1"></span>
+                <span class="dot dot-2"></span>
+                <span class="dot dot-3"></span>
             </div>
         </div>
     </div>
