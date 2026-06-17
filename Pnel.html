@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -646,7 +646,10 @@
 </div>
 
 <script>
+    // متغیرهای نشست امن (به روز شده)
     let currentUser = localStorage.getItem('userNationalCode');
+    let currentToken = localStorage.getItem('userAuthToken');
+    
     let globalUserInfo = null; 
     let currentOrderId = null; 
     let activeTicketOrderId = null; 
@@ -657,6 +660,15 @@
     let activePayOrderId = null;
     let activePayStage = 1;
     let activePayAmount = 0;
+
+    // تابع امن‌ساز محلی برای فیلدهای خروجی
+    function sanitizeExcel(str) {
+        if (!str) return str;
+        str = String(str);
+        str = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+        if (/^[=+\-@]/.test(str)) { return "'" + str; }
+        return str;
+    }
 
     function openLightbox(src) {
         if(!src) return;
@@ -782,16 +794,6 @@
         const img = await loadImageFromFile(file);
         const isTransparent = hasTransparency(img);
         return await compressBaseImage(img, maxKB, isTransparent);
-    }
-
-    // تابع امنیتی پیشرفته برای جلوگیری از کدهای مخرب (XSS) و شکستن قالب سایت
-    function sanitizeExcel(str) {
-        if (!str) return str;
-        str = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        if (/^[=+\-@]/.test(str)) {
-            return "'" + str;
-        }
-        return str;
     }
 
     function isValidNationalCode(code) {
@@ -933,11 +935,12 @@
         }
     }
 
+    // ارسال توکن امنیتی در خواندن تصاویر
     function loadImageBase64(fileId, callback) {
         fetch(GAS_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "get_image_base64", fileId: fileId })
+            body: JSON.stringify({ action: "get_image_base64", fileId: fileId, nationalCode: currentUser, token: currentToken })
         })
         .then(res => res.json())
         .then(data => {
@@ -1015,9 +1018,9 @@
     }
 
     function showUserProfile() {
-        let name = (globalUserInfo && globalUserInfo.name && globalUserInfo.name !== "undefined") ? globalUserInfo.name : 'نامشخص';
-        let natCode = (globalUserInfo && globalUserInfo.natCode) ? globalUserInfo.natCode : currentUser;
-        let phone = (globalUserInfo && globalUserInfo.phone && globalUserInfo.phone !== "undefined") ? globalUserInfo.phone : 'ثبت نشده';
+        let name = (globalUserInfo && globalUserInfo.name && globalUserInfo.name !== "undefined") ? sanitizeExcel(globalUserInfo.name) : 'نامشخص';
+        let natCode = (globalUserInfo && globalUserInfo.natCode) ? sanitizeExcel(globalUserInfo.natCode) : sanitizeExcel(currentUser);
+        let phone = (globalUserInfo && globalUserInfo.phone && globalUserInfo.phone !== "undefined") ? sanitizeExcel(globalUserInfo.phone) : 'ثبت نشده';
 
         Swal.fire({
             title: '<i class="fas fa-user-circle text-blue-600 text-5xl mb-3 mt-2"></i><br><span class="font-bold">پروفایل شما</span>',
@@ -1035,11 +1038,14 @@
     }
 
     window.onload = function() {
-        if (currentUser) {
+        if (currentUser && currentToken) {
             document.getElementById('authSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('hidden');
             document.getElementById('userNationalCodeDisplay').innerText = 'کد ملی: ' + currentUser;
             loadOrders();
+        } else {
+            // اگر کاربر قدیمی است و توکن ندارد لاگ‌اوتش می‌کنیم تا دوباره لاگین کند
+            if (currentUser) logout();
         }
         window.addEventListener('online', () => {
             const bar = document.getElementById('connectionStatus');
@@ -1057,7 +1063,7 @@
     }
 
     function handleAuth() {
-        const nationalCode = document.getElementById('nationalCode').value.trim();
+        const nationalCode = sanitizeExcel(document.getElementById('nationalCode').value.trim());
         const password = document.getElementById('password').value.trim();
         if (!nationalCode || !password) return Swal.fire('خطا', 'کد ملی و رمز عبور را وارد کنید.', 'warning');
         if (!isValidNationalCode(nationalCode)) return Swal.fire('خطا', 'کد ملی معتبر نیست.', 'error');
@@ -1071,6 +1077,7 @@
             if (data.status === "success") {
                 Swal.fire({title:'موفق', text:'با موفقیت وارد شدید', icon:'success', timer:1500, showConfirmButton:false});
                 localStorage.setItem('userNationalCode', nationalCode);
+                localStorage.setItem('userAuthToken', data.token); // ذخیره توکن امنیتی
                 setTimeout(() => window.location.reload(), 1500);
             } else Swal.fire('خطا', data.message, 'error');
         }).catch(err => { Swal.close(); Swal.fire('خطا', 'مشکل ارتباطی.', 'error'); });
@@ -1094,7 +1101,7 @@
                 Swal.fire({ title: 'در حال تغییر...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
                 fetch(GAS_URL, {
                     method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "change_password", nationalCode: currentUser, oldPassword: result.value.oldPass, newPassword: result.value.newPass })
+                    body: JSON.stringify({ action: "change_password", nationalCode: currentUser, token: currentToken, oldPassword: result.value.oldPass, newPassword: result.value.newPass })
                 }).then(res => res.json()).then(data => {
                     if(data.status === 'success') Swal.fire('موفق', data.message, 'success');
                     else Swal.fire('خطا', data.message, 'error');
@@ -1103,7 +1110,11 @@
         });
     }
 
-    function logout() { localStorage.removeItem('userNationalCode'); window.location.reload(); }
+    function logout() { 
+        localStorage.removeItem('userNationalCode'); 
+        localStorage.removeItem('userAuthToken'); 
+        window.location.reload(); 
+    }
 
     function showOrderForm() {
         document.getElementById('newOrderForm').classList.remove('hidden');
@@ -1126,11 +1137,12 @@
         Swal.fire({ title: 'در حال ایجاد سفارش...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
         fetch(GAS_URL, {
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "create_order", nationalCode: currentUser, siteName: siteName, slogan: slogan, template: template })
+            body: JSON.stringify({ action: "create_order", nationalCode: currentUser, token: currentToken, siteName: siteName, slogan: slogan, template: template })
         }).then(res => res.json()).then(data => {
             Swal.close(); 
             btn.disabled = false;
             btn.innerHTML = 'ثبت اولیه و ادامه';
+            if(data.status === "error") return Swal.fire('خطا', data.message, 'error');
             currentOrderId = data.orderId;
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
@@ -1164,6 +1176,7 @@
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ 
                 action: "update_order_details", 
+                nationalCode: currentUser, token: currentToken,
                 orderId: currentOrderId, 
                 bio: combinedBioAndNotes, 
                 contact: combinedContact, 
@@ -1172,6 +1185,7 @@
         }).then(res => res.json()).then(data => {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-save ml-2"></i> ذخیره نهایی اطلاعات';
+            if(data.status === "error") return Swal.fire('خطا', data.message, 'error');
             Swal.fire({
                 title: 'ذخیره شد',
                 text: 'اطلاعات با موفقیت ذخیره شد. فرم اکنون بسته می‌شود و در صورت نیاز می‌توانید پرداخت خود را از طریق لیست سفارشات انجام دهید.',
@@ -1221,6 +1235,7 @@
                 method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({
                     action: "upload_receipt", 
+                    nationalCode: currentUser, token: currentToken,
                     orderId: activePayOrderId,
                     stage: activePayStage,
                     amount: activePayAmount,
@@ -1257,7 +1272,7 @@
                 Swal.fire({ title: 'در حال حذف ایمن داده‌ها از سرور...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
                 fetch(GAS_URL, {
                     method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "delete_order", orderId: orderId })
+                    body: JSON.stringify({ action: "delete_order", nationalCode: currentUser, token: currentToken, orderId: orderId })
                 }).then(res => res.json()).then(data => {
                     if(data.status === 'success') {
                         Swal.fire('حذف شد!', 'سفارش و فایل‌های شما با موفقیت پاک شدند.', 'success');
@@ -1280,9 +1295,9 @@
         renderSkeleton(); 
         fetch(GAS_URL, {
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "get_orders", nationalCode: currentUser })
+            body: JSON.stringify({ action: "get_orders", nationalCode: currentUser, token: currentToken })
         }).then(res => res.json()).then(data => {
-            
+            if(data.status === "error") return Swal.fire('خطا', data.message, 'error');
             if(data.userInfo) {
                 globalUserInfo = data.userInfo;
             }
@@ -1503,6 +1518,7 @@
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({
                         action: "replace_receipt",
+                        nationalCode: currentUser, token: currentToken,
                         orderId: orderId,
                         oldReceiptRow: oldReceiptRow,
                         stage: stage,
@@ -1608,7 +1624,7 @@
         fetch(GAS_URL, {
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
-                action: "update_full_order", orderId: activeEditOrderId,
+                action: "update_full_order", nationalCode: currentUser, token: currentToken, orderId: activeEditOrderId,
                 siteName: sanitizeExcel(document.getElementById('viewSiteName').value), 
                 slogan: sanitizeExcel(document.getElementById('viewSlogan').value),
                 template: sanitizeExcel(document.getElementById('viewTemplate').value), 
@@ -1688,6 +1704,7 @@
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ 
                 action: "save_domain", 
+                nationalCode: currentUser, token: currentToken,
                 orderId: activeActionOrderId, 
                 domainStatus: domainStatus,
                 proposedDomains: proposedDomains
@@ -1765,7 +1782,7 @@
                 const response = await fetch(GAS_URL, {
                     method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({
-                        action: "upload_image", orderId: activeActionOrderId,
+                        action: "upload_image", nationalCode: currentUser, token: currentToken, orderId: activeActionOrderId,
                         base64Full: base64Content, mimeType: mimeType, fileName: file.name, description: desc
                     })
                 });
@@ -1875,7 +1892,7 @@
         Swal.fire({ title: 'در حال حذف...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         fetch(GAS_URL, {
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "delete_image", orderId: orderId, fileId: fileId })
+            body: JSON.stringify({ action: "delete_image", nationalCode: currentUser, token: currentToken, orderId: orderId, fileId: fileId })
         }).then(res => res.json()).then(data => {
             if (data.status === 'success') {
                 Swal.fire({title:'موفق', text:'تصویر با موفقیت حذف شد.', icon:'success', timer:1500, showConfirmButton:false});
@@ -1903,7 +1920,7 @@
         Swal.fire({ title: 'در حال ذخیره...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         fetch(GAS_URL, {
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "update_image_description", orderId: orderId, fileId: fileId, description: sanitizeExcel(newDesc) })
+            body: JSON.stringify({ action: "update_image_description", nationalCode: currentUser, token: currentToken, orderId: orderId, fileId: fileId, description: sanitizeExcel(newDesc) })
         }).then(res => res.json()).then(data => {
             if (data.status === 'success') {
                 Swal.fire({title:'موفق', text:'توضیح تصویر به‌روزرسانی شد.', icon:'success', timer:1500, showConfirmButton:false});
@@ -1931,6 +1948,7 @@
                     method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({
                         action: "replace_image",
+                        nationalCode: currentUser, token: currentToken,
                         orderId: orderId,
                         oldFileId: oldFileId,
                         base64Full: base64Content,
@@ -2021,7 +2039,7 @@
 
         fetch(GAS_URL, {
             method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "submit_ticket", orderId: activeTicketOrderId, nationalCode: currentUser, message: msg })
+            body: JSON.stringify({ action: "submit_ticket", nationalCode: currentUser, token: currentToken, orderId: activeTicketOrderId, message: msg })
         }).then(res => res.json()).then(data => {
             msgInput.disabled = false;
             btnSend.disabled = false;
@@ -2086,4 +2104,4 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 </script>
 </body>
-</html>       
+</html>
