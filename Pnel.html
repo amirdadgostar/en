@@ -64,8 +64,8 @@
     <img id="lightboxImg" class="max-h-[90vh] max-w-[95vw] object-contain cursor-zoom-out shadow-2xl rounded-lg">
 </div>
 
-<div id="authSection" class="min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-xl shadow-lg w-96 border-t-4 border-blue-600">
+<div id="authSection" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border-t-4 border-blue-600">
         <h2 class="text-2xl font-bold text-center mb-6 text-blue-600">ورود به حساب</h2>
         <input type="text" id="nationalCode" placeholder="کد ملی (۱۰ رقمی)" class="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" maxlength="10" inputmode="numeric">
         <div class="relative w-full mb-4">
@@ -92,7 +92,7 @@
         </div>
     </nav>
 
-    <div class="container mx-auto p-6 max-w-5xl flex-1">
+    <div class="container mx-auto p-4 sm:p-6 w-full max-w-5xl flex-1">
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
             <div>
                 <h2 class="text-lg font-bold text-blue-800">سایت جدید نیاز دارید؟</h2>
@@ -307,7 +307,7 @@
 
 <!-- مودال کارت به کارت -->
 <div id="cardPaymentModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative border-t-4 border-green-500">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative border-t-4 border-green-500 w-full overflow-hidden">
         <button onclick="closeModal('cardPaymentModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
         <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-3"><i class="fas fa-credit-card text-green-500 ml-2"></i> پرداخت کارت به کارت</h2>
         
@@ -319,8 +319,10 @@
         <div class="bg-yellow-50 p-5 rounded-xl border border-yellow-200 text-sm text-yellow-800 mb-5 text-center leading-relaxed shadow-sm">
             لطفاً مبلغ فوق را دقیقاً به شماره کارت زیر واریز نموده و تصویر رسید را آپلود کنید.<br>
             <span class="text-xs text-gray-500 block mt-2">(جهت کپی روی شماره کارت کلیک کنید)</span>
-            <div onclick="copyCardNumber()" class="text-2xl font-bold mt-2 tracking-widest text-gray-900 bg-white p-3 border rounded-xl cursor-pointer hover:bg-blue-50 transition shadow-sm" dir="ltr" title="کلیک برای کپی">6219861910806008</div>
-            <div class="text-sm text-gray-700 mt-2 font-bold bg-white inline-block px-4 py-1 rounded-full border shadow-sm">به نام: امیرحسین دادگستر</div>
+            <div class="w-full flex justify-center mt-2">
+                <div onclick="copyCardNumber()" class="text-2xl font-bold tracking-widest text-gray-900 bg-white p-3 border rounded-xl cursor-pointer hover:bg-blue-50 transition shadow-sm inline-block" dir="ltr" title="کلیک برای کپی">6219861910806008</div>
+            </div>
+            <div class="text-sm text-gray-700 mt-3 font-bold bg-white inline-block px-4 py-1 rounded-full border shadow-sm">به نام: امیرحسین دادگستر</div>
         </div>
         
         <input type="file" id="receiptInput" accept="image/*" class="w-full border-2 border-dashed border-gray-300 p-3 rounded-xl text-sm bg-gray-50 hover:bg-gray-100 transition mb-4 outline-none">
@@ -383,10 +385,10 @@
             <button onclick="closeModal('ticketsModal')" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-2xl"></i></button>
         </div>
         <div id="ticketsChatBox" class="flex-1 overflow-y-auto p-4 flex flex-col bg-gray-100 inner-shadow"></div>
-        <div class="p-4 bg-white border-t rounded-b-2xl shadow-inner">
-            <div class="flex gap-2 relative">
-                <input type="text" id="newTicketMessage" maxlength="500" placeholder="پیام خود را بنویسید..." class="flex-1 p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-gray-50">
-                <button onclick="sendNewTicket()" id="btnSendTicket" class="bg-blue-600 text-white px-6 py-4 rounded-xl hover:bg-blue-700 shadow-lg font-bold transition flex items-center justify-center"><i class="fas fa-paper-plane ml-1"></i> ارسال</button>
+        <div class="p-4 bg-white border-t rounded-b-2xl shadow-inner flex-shrink-0">
+            <div class="flex flex-row gap-2 relative items-stretch w-full">
+                <textarea id="newTicketMessage" rows="2" placeholder="پیام خود را بنویسید (حداکثر ۳۰۰ کلمه)..." class="flex-1 p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-gray-50 resize-none"></textarea>
+                <button onclick="sendNewTicket()" id="btnSendTicket" class="bg-blue-600 text-white px-5 rounded-xl hover:bg-blue-700 shadow-lg font-bold transition flex flex-col items-center justify-center flex-shrink-0 h-auto whitespace-nowrap"><i class="fas fa-paper-plane mb-1"></i> ارسال</button>
             </div>
         </div>
     </div>
@@ -782,8 +784,10 @@
         return await compressBaseImage(img, maxKB, isTransparent);
     }
 
+    // تابع امنیتی پیشرفته برای جلوگیری از کدهای مخرب (XSS) و شکستن قالب سایت
     function sanitizeExcel(str) {
         if (!str) return str;
+        str = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         if (/^[=+\-@]/.test(str)) {
             return "'" + str;
         }
@@ -1802,7 +1806,7 @@
         
         if(!order || !order.images || order.images.length === 0) {
             badge.innerText = '0 / 10';
-            gallery.innerHTML = '<div class="col-span-full text-center bg-gray-50 p-8 rounded-2xl border text-gray-400 font-bold"><i class="fas fa-images text-4xl mb-3 block text-gray-300"></i>هنوز تصویری ارسال نشده است.</div>';
+            gallery.innerHTML = '<div class="col-span-full text-center bg-gray-50 p-8 rounded-2xl border text-gray-400 font-bold w-11/12 mx-auto"><i class="fas fa-images text-4xl mb-3 block text-gray-300"></i>هنوز تصویری ارسال نشده است.</div>';
             return;
         }
 
@@ -1967,20 +1971,31 @@
                             <span>${senderName}</span>
                             <span class="font-normal text-[10px] bg-white bg-opacity-30 px-2 py-0.5 rounded">${ticket.date}</span>
                         </div>
-                        <div class="leading-relaxed text-sm">${ticket.message}</div>
+                        <div class="leading-relaxed text-sm whitespace-pre-wrap">${ticket.message}</div>
                     </div>`;
             });
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
-        } else chatBox.innerHTML = '<div class="text-center text-gray-400 mt-10 font-bold empty-ticket-text bg-white p-6 rounded-2xl mx-10 shadow-sm border"><i class="fas fa-comment-dots text-4xl mb-3 text-gray-300 block"></i>پیامی در این تیکت وجود ندارد.</div>';
+        } else {
+            chatBox.innerHTML = '<div class="text-center text-gray-400 mt-8 font-bold empty-ticket-text bg-white p-6 rounded-2xl w-11/12 mx-auto shadow-sm border"><i class="fas fa-comment-dots text-4xl mb-3 text-gray-300 block"></i>پیامی در این تیکت وجود ندارد.</div>';
+        }
         document.getElementById('ticketsModal').classList.remove('hidden');
     }
 
     function sendNewTicket() {
         const msgInput = document.getElementById('newTicketMessage');
         const rawMsg = msgInput.value.trim();
-        const msg = sanitizeExcel(rawMsg);
         
-        if(!msg || !activeTicketOrderId) return;
+        if(!rawMsg || !activeTicketOrderId) return;
+        
+        // کنترل تعداد کلمات (حداکثر 300 کلمه)
+        const wordCount = rawMsg.split(/\s+/).length;
+        if(wordCount > 300) {
+            Swal.fire('خطا', 'متن پیام نمی‌تواند بیشتر از ۳۰۰ کلمه باشد.', 'warning');
+            return;
+        }
+
+        // کاملا ایمن کردن متن در برابر کدهای مخرب
+        const msg = sanitizeExcel(rawMsg);
         
         const chatBox = document.getElementById('ticketsChatBox');
         const emptyText = chatBox.querySelector('.empty-ticket-text');
@@ -1995,7 +2010,7 @@
                     <span>شما</span>
                     <span class="font-normal text-[10px] bg-white bg-opacity-30 px-2 py-0.5 rounded"><i class="fas fa-spinner fa-spin"></i> در حال ارسال...</span>
                 </div>
-                <div class="leading-relaxed text-sm">${msg}</div>
+                <div class="leading-relaxed text-sm whitespace-pre-wrap">${msg}</div>
             </div>`;
         setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
 
@@ -2021,7 +2036,7 @@
                             <span>شما</span>
                             <span class="font-normal text-[10px] bg-white bg-opacity-30 px-2 py-0.5 rounded">${currentDate}</span>
                         </div>
-                        <div class="leading-relaxed text-sm">${msg}</div>`;
+                        <div class="leading-relaxed text-sm whitespace-pre-wrap">${msg}</div>`;
                 }
                 const order = allLoadedOrders.find(o => o.orderId === activeTicketOrderId);
                 if(order) {
@@ -2071,4 +2086,4 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 </script>
 </body>
-</html>          
+</html>
