@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6Lf4KyUtAAAAACXMJ67b8p2lxG6tsmj9wI9z11tk"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap');
         body { font-family: 'Vazirmatn', sans-serif; background-color: #f3f4f6; }
@@ -1067,19 +1069,28 @@
         if (!nationalCode || !password) return Swal.fire('خطا', 'کد ملی و رمز عبور را وارد کنید.', 'warning');
         if (!isValidNationalCode(nationalCode)) return Swal.fire('خطا', 'کد ملی معتبر نیست.', 'error');
 
-        Swal.fire({ title: 'در حال برقراری ارتباط...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
+        Swal.fire({ title: 'در حال بررسی امنیتی و برقراری ارتباط...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
 
-        fetch(GAS_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "login", nationalCode: nationalCode, password: password })
-        }).then(res => res.json()).then(data => {
-            if (data.status === "success") {
-                Swal.fire({title:'موفق', text:'با موفقیت وارد شدید', icon:'success', timer:1500, showConfirmButton:false});
-                localStorage.setItem('userNationalCode', nationalCode);
-                localStorage.setItem('userAuthToken', data.token); // ذخیره توکن امنیتی
-                setTimeout(() => window.location.reload(), 1500);
-            } else Swal.fire('خطا', data.message, 'error');
-        }).catch(err => { Swal.close(); Swal.fire('خطا', 'مشکل ارتباطی.', 'error'); });
+        grecaptcha.ready(function() {
+            grecaptcha.execute('6Lf4KyUtAAAAACXMJ67b8p2lxG6tsmj9wI9z11tk', {action: 'login'}).then(function(recaptchaToken) {
+                fetch(GAS_URL, {
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ 
+                        action: "login", 
+                        nationalCode: nationalCode, 
+                        password: password,
+                        recaptchaToken: recaptchaToken
+                    })
+                }).then(res => res.json()).then(data => {
+                    if (data.status === "success") {
+                        Swal.fire({title:'موفق', text:'با موفقیت وارد شدید', icon:'success', timer:1500, showConfirmButton:false});
+                        localStorage.setItem('userNationalCode', nationalCode);
+                        localStorage.setItem('userAuthToken', data.token); // ذخیره توکن امنیتی
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else Swal.fire('خطا', data.message, 'error');
+                }).catch(err => { Swal.close(); Swal.fire('خطا', 'مشکل ارتباطی.', 'error'); });
+            });
+        });
     }
 
     function changePassword() {
@@ -2103,4 +2114,4 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 </script>
 </body>
-</html>
+</html>          
