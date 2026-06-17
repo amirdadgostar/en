@@ -1962,7 +1962,7 @@
         const order = allLoadedOrders.find(o => o.orderId === orderId);
         if(order && order.tickets && order.tickets.length > 0) {
             order.tickets.forEach(ticket => {
-                const isUser = ticket.sender.toLowerCase() === currentUser;
+                const isUser = String(ticket.sender).trim() === String(currentUser).trim();
                 const bubbleClass = isUser ? 'chat-user' : 'chat-admin shadow-md';
                 const senderName = isUser ? 'شما' : '<i class="fas fa-headset ml-1 text-blue-500"></i> پشتیبانی ToWeb';
                 chatBox.innerHTML += 
@@ -2086,4 +2086,4 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 </script>
 </body>
-</html>
+</html>       
